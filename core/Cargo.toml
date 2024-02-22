@@ -1,0 +1,31 @@
+[package]
+name = "poker-core"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+zplonk = { path = "../../uzkge/zplonk"}
+zshuffle = { path = "../../uzkge/shuffle"}
+ark-ec = "0.4"
+ark-ff = "0.4"
+ark-std = "0.4"
+ark-ed-on-bn254 = "0.4"
+ark-bn254 = "0.4"
+ark-serialize = { version = "0.4", default-features = false, features = ["derive"] }
+rand_chacha = "0.3"
+lazy_static = "1.4"
+serde = { version = "1.0", features = ["derive"] }
+risc0-zkvm = { version = "0.20.1", default-features = false }
+hashbrown = "=0.12.3"
+serde_json = "1.0"
+num-bigint = "0.4.3"
+num-integer = "0.1.45"
+
+[dev-dependencies]
+
+[features]
+default = ["serialize0"]
+serialize0 = ["zplonk/serialize0"]
+deserialize0 = ["zplonk/deserialize0"]

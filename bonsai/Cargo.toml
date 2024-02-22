@@ -1,0 +1,24 @@
+[package]
+name = "bonsai"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+poker-methods = { path = "../methods" }
+poker-core = { path = "../core", features= ["serialize0","deserialize0"]}
+risc0-zkvm = { version = "0.20.1", default-features = false }
+bonsai-sdk = "0.6.1"
+bytemuck = "1.14"
+hex = "0.4"
+bincode = "1.3"
+
+[dev-dependencies]
+num-bigint = "0.4.3"
+num-integer = "0.1.45"
+num-traits = "0.2.18"
+ark-bn254 = "0.4"
+ark-serialize = { version = "0.4", default-features = false }
+hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
+ark-ff = "0.4"
