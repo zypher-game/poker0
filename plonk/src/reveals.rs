@@ -178,9 +178,9 @@ impl RevealOutsource {
 #[cfg(test)]
 mod test {
     use super::RevealOutsource;
-    use crate::prove_outsource::public_keys::PublicKeyOutsource;
-    use crate::task::mock_task;
+    use crate::public_keys::PublicKeyOutsource;
     use ark_bn254::Fr;
+    use poker_core::task::mock_task;
     use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
 
     #[test]

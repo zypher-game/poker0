@@ -3,7 +3,8 @@ members = [
   "core",
   "host",
   "methods",
-  "bonsai",
+  "bonsai", 
+  "plonk",
 ]
 resolver = "2"
 

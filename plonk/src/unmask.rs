@@ -74,11 +74,11 @@ impl UnmaskOutsource {
 
 #[cfg(test)]
 mod test {
-    use crate::prove_outsource::{
+    use crate::{
         public_keys::PublicKeyOutsource, reveals::RevealOutsource, unmask::UnmaskOutsource,
     };
-    use crate::task::mock_task;
     use ark_bn254::Fr;
+    use poker_core::task::mock_task;
     use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
 
     #[test]

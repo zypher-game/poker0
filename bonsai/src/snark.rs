@@ -42,15 +42,16 @@ mod test {
     use crate::{snark::run_stark2snark, stark::run_bonsai};
     use ark_bn254::Fr;
     use ark_ff::{BigInteger, PrimeField};
-    use ark_serialize::CanonicalDeserialize;
+    use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
     use hex::FromHex;
     use num_bigint::BigInt;
-    use poker_core::task::{get_mock_vec, Task0, TaskCommit};
+    use poker_core::task::{mock_task_journal, mock_task_vec, Task0, TaskCommit};
     use poker_methods::POKER_METHOD_ID;
     use risc0_zkvm::{
-        serde::from_slice,
+        serde::{from_slice, to_vec},
         sha::{Digest, Digestible},
-        Groth16Proof, Groth16Receipt, Groth16Seal, InnerReceipt, Receipt, ALLOWED_IDS_ROOT,
+        Groth16Proof, Groth16Receipt, Groth16Seal, InnerReceipt, Journal, Receipt,
+        ALLOWED_IDS_ROOT,
     };
     use std::str::FromStr;
     use std::time::Instant;
@@ -89,7 +90,7 @@ mod test {
 
     #[test]
     fn stark_to_snark_test() {
-        let task_bytes = get_mock_vec();
+        let task_bytes = mock_task_vec();
         let task: Task0 = from_slice(&task_bytes).unwrap();
 
         let start = Instant::now();

@@ -26,6 +26,6 @@ num-integer = "0.1.45"
 [dev-dependencies]
 
 [features]
-default = ["serialize0"]
+default = []
 serialize0 = ["zplonk/serialize0"]
 deserialize0 = ["zplonk/deserialize0"]

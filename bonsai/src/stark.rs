@@ -66,14 +66,14 @@ pub fn run_bonsai(input_data: &Task0) -> Result<(Receipt, SessionId)> {
 #[cfg(test)]
 mod test {
     use crate::stark::run_bonsai;
-    use poker_core::task::{get_mock_vec, Task0, TaskCommit};
+    use poker_core::task::{mock_task_vec, Task0, TaskCommit};
     use poker_methods::POKER_METHOD_ID;
     use risc0_zkvm::serde::from_slice;
     use std::time::Instant;
 
     #[test]
     fn bonsai_sdk_test() {
-        let task_bytes = get_mock_vec();
+        let task_bytes = mock_task_vec();
         let task: Task0 = from_slice(&task_bytes).unwrap();
 
         let start = Instant::now();

@@ -2,7 +2,7 @@ use ark_bn254::Fr;
 use ark_ed_on_bn254::{EdwardsAffine, EdwardsProjective};
 use zplonk::turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS};
 
-use crate::schnorr::PublicKey;
+use poker_core::schnorr::PublicKey;
 
 pub struct PublicKeyOutsource {
     pub public_keys: Vec<EdwardsProjective>,

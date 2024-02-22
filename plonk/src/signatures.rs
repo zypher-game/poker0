@@ -11,7 +11,7 @@ use zplonk::{
     turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS, VarIndex},
 };
 
-use crate::{cards::CryptoCard, play::MAX_PLAYER_HAND_LEN, schnorr::Signature};
+use poker_core::{cards::CryptoCard, play::MAX_PLAYER_HAND_LEN, schnorr::Signature};
 
 use super::public_keys::PublicKeyOutsource;
 
@@ -134,9 +134,9 @@ impl SignatureOutsource {
 
 #[cfg(test)]
 mod test {
-    use crate::prove_outsource::public_keys::PublicKeyOutsource;
-    use crate::task::mock_task;
+    use crate::public_keys::PublicKeyOutsource;
     use ark_bn254::Fr;
+    use poker_core::task::mock_task;
     use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
 
     use super::SignatureOutsource;
