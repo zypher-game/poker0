@@ -300,7 +300,7 @@ impl PartialOrd for ClassicCardCombination {
 }
 
 impl ClassicCardCombination {
-    pub fn sanity_check(&self) -> bool {
+    pub fn validate_rules(&self) -> bool {
         match self {
             Single(_) => true,
 
@@ -315,8 +315,8 @@ impl ClassicCardCombination {
             }
 
             ThreeWithPair(x1, x2, x3, y1, y2) => {
-                let condition1 = ThreeOfAKind(*x1, *x2, *x3).sanity_check();
-                let condition2 = Pair(*y1, *y2).sanity_check();
+                let condition1 = ThreeOfAKind(*x1, *x2, *x3).validate_rules();
+                let condition2 = Pair(*y1, *y2).validate_rules();
 
                 condition1 && condition2
             }
@@ -375,12 +375,12 @@ impl ClassicCardCombination {
 
             TripleStraightWithOne(x) => {
                 let triple_stright = x.iter().map(|x| (x.0, x.1, x.2)).collect::<Vec<_>>();
-                TripleStraight(triple_stright).sanity_check()
+                TripleStraight(triple_stright).validate_rules()
             }
 
             TripleStraightWithPair(x) => {
                 let triple_stright = x.iter().map(|x| (x.0, x.1, x.2)).collect::<Vec<_>>();
-                let condition1 = TripleStraight(triple_stright).sanity_check();
+                let condition1 = TripleStraight(triple_stright).validate_rules();
                 let condition2 = x.iter().all(|x| x.3.get_value() == x.4.get_value());
 
                 condition1 && condition2

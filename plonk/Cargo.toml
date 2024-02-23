@@ -7,8 +7,8 @@ edition = "2021"
 
 [dependencies]
 poker-core = { path = "../core", default-features = false }
-zplonk = { path = "../../uzkge/zplonk"}
-zshuffle = { path = "../../uzkge/shuffle"}
+zplonk = { path = "../../uzkge/zplonk" }
+zshuffle = { path = "../../uzkge/shuffle" }
 ark-ec = "0.4"
 ark-ff = "0.4"
 ark-ed-on-bn254 = "0.4"

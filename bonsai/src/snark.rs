@@ -3,7 +3,7 @@ use bonsai_sdk::alpha as bonsai_sdk;
 use poker_core::errors::{PokerError, Result};
 use std::time::Duration;
 
-pub fn run_stark2snark(session_id: SessionId) -> Result<SnarkReceipt> {
+pub fn stark_to_snark(session_id: SessionId) -> Result<SnarkReceipt> {
     let client = bonsai_sdk::Client::from_env(risc0_zkvm::VERSION)
         .map_err(|x| PokerError::BonsaiSdkError(x.to_string()))?;
 
@@ -18,7 +18,6 @@ pub fn run_stark2snark(session_id: SessionId) -> Result<SnarkReceipt> {
 
         match res.status.as_str() {
             "RUNNING" => {
-                eprintln!("Current status: {} - continue polling...", res.status,);
                 std::thread::sleep(Duration::from_secs(5));
                 continue;
             }
@@ -39,13 +38,16 @@ pub fn run_stark2snark(session_id: SessionId) -> Result<SnarkReceipt> {
 #[cfg(test)]
 #[allow(unused)]
 mod test {
-    use crate::{snark::run_stark2snark, stark::run_bonsai};
+    use crate::{snark::stark_to_snark, stark::prove_bonsai};
     use ark_bn254::Fr;
     use ark_ff::{BigInteger, PrimeField};
     use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
     use hex::FromHex;
     use num_bigint::BigInt;
-    use poker_core::task::{mock_task_journal, mock_task_vec, Task0, TaskCommit};
+    use poker_core::{
+        mock_data::{mock_journal, mock_task_vec},
+        task::{Task0, TaskCommit},
+    };
     use poker_methods::POKER_METHOD_ID;
     use risc0_zkvm::{
         serde::{from_slice, to_vec},
@@ -53,8 +55,7 @@ mod test {
         Groth16Proof, Groth16Receipt, Groth16Seal, InnerReceipt, Journal, Receipt,
         ALLOWED_IDS_ROOT,
     };
-    use std::str::FromStr;
-    use std::time::Instant;
+    use std::{str::FromStr, time::Instant};
 
     fn fr_from_bytes(scalar: &[u8]) -> Fr {
         let scalar: Vec<u8> = scalar.iter().rev().cloned().collect();
@@ -94,7 +95,7 @@ mod test {
         let task: Task0 = from_slice(&task_bytes).unwrap();
 
         let start = Instant::now();
-        let (receipt, session_id) = run_bonsai(&task).unwrap();
+        let (receipt, session_id) = prove_bonsai(&task).unwrap();
         println!("Prover time: {:.2?}", start.elapsed());
 
         assert!(receipt.verify(POKER_METHOD_ID).is_ok());
@@ -105,7 +106,7 @@ mod test {
         assert_eq!(commit.winner, 2);
 
         let start = Instant::now();
-        let snark_proof = run_stark2snark(session_id).unwrap();
+        let snark_proof = stark_to_snark(session_id).unwrap();
         println!("Stark2Snark time: {:.2?}", start.elapsed());
 
         let receipt_claim = receipt.get_claim().unwrap();
@@ -150,5 +151,67 @@ mod test {
 
         //     assert!(groth16_proof.verify().is_ok())
         // }
+    }
+
+    #[test]
+    fn onchain_verify_test() {
+        let task_bytes = mock_task_vec();
+        let task: Task0 = from_slice(&task_bytes).unwrap();
+
+        let start = Instant::now();
+        let (receipt, session_id) = prove_bonsai(&task).unwrap();
+        println!("Prover time: {:.2?}", start.elapsed());
+
+        assert!(receipt.verify(POKER_METHOD_ID).is_ok());
+
+        let journal: Vec<u8> = bytemuck::cast_slice(&mock_journal()).to_vec();
+        assert_eq!(journal, receipt.journal.bytes);
+
+        let commit: TaskCommit = receipt.journal.decode().unwrap();
+        assert_eq!(commit.room_id, task.room_id);
+        assert_eq!(commit.players_hand, task.players_hand);
+        assert_eq!(commit.winner, 2);
+
+        let start = Instant::now();
+        let snark_proof = stark_to_snark(session_id).unwrap();
+        println!("Stark2Snark time: {:.2?}", start.elapsed());
+
+        let receipt_claim = receipt.get_claim().unwrap();
+
+        let groth16_seal = Groth16Seal {
+            a: snark_proof.snark.a,
+            b: snark_proof.snark.b,
+            c: snark_proof.snark.c,
+        };
+        let image_id: Digest = POKER_METHOD_ID.into();
+
+        println!("---------on-chain verification data---------");
+        println!("seal:0x{}", hex::encode(groth16_seal.to_vec()));
+        println!("image_id:0x{}", image_id);
+        println!("post_digest:0x{}", receipt_claim.post.digest());
+        println!("jounral:0x{}", receipt.journal.digest());
+    }
+
+    #[test]
+    fn journal_test() {
+        let journal_byte32 = mock_journal();
+        // println!("{:?}",journal_byte32);
+        let journal_bytes: Vec<u8> = bytemuck::cast_slice(&journal_byte32).to_vec();
+       // println!("{:?}", journal_bytes);
+        let commit: TaskCommit = from_slice(&journal_byte32).unwrap();
+
+        let vec = to_vec(&commit).unwrap();
+
+        let x0 = commit.players_hand[0][0].0.e1;
+        let mut y0 = vec![];
+        x0.serialize_uncompressed(&mut y0).unwrap();
+
+        let x1 = commit.players_hand[0][0].0.e2;
+        let mut y1 = vec![];
+        x1.serialize_uncompressed(&mut y1).unwrap();
+
+        println!("y1:{:?}", y1)
+
+        //  println!("{:?}",commit);
     }
 }

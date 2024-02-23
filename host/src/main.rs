@@ -1,4 +1,4 @@
-use poker_core::task::{mock_task, Task0};
+use poker_core::{mock_data::mock_task, task::Task0};
 use poker_methods::{POKER_METHOD_ELF, POKER_METHOD_ID};
 use risc0_zkvm::{default_prover, ExecutorEnv};
 

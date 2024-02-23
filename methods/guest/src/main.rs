@@ -10,6 +10,7 @@ pub fn main() {
     let task: Task0 = env::read();
     println!("read cycle:{}", env::cycle_count() - cycle_0);
 
+    // todo Try using array indexing to identify some data, aiming to reduce serialization.
     let Task0 {
         room_id,
         num_round,
@@ -38,7 +39,7 @@ pub fn main() {
             .iter()
             .rev()
             .take(n - 1)
-            .all(|x| x.action == PlayAction::PAAS)); // todo the last
+            .all(|x| x.action == PlayAction::PAAS));
 
         for (i, player) in round_env.iter().enumerate() {
             let turn_id = i / n;
@@ -52,8 +53,6 @@ pub fn main() {
             packs.push(pack);
 
             if i == 0 {
-                let cycle_1 = env::cycle_count();
-
                 assert_eq!(player.action, PlayAction::PLAY);
 
                 let play_crypto_cards = player.play_crypto_cards.clone().unwrap().to_vec();
@@ -62,7 +61,7 @@ pub fn main() {
                 let play_unmasked_cards_vec = play_unmasked_cards.to_vec();
                 unmasked_cards.extend(play_unmasked_cards_vec);
                 let classic = play_unmasked_cards.morph_to_classic().unwrap();
-                assert!(classic.sanity_check());
+                assert!(classic.validate_rules());
 
                 let hand = input_hand.get_mut(current).unwrap();
                 let hand_len = hand.len();
@@ -79,13 +78,9 @@ pub fn main() {
                     winner = current + 1
                 }
 
-                println!("inner i:{} cycle:{}", i, env::cycle_count() - cycle_1);
-
                 round_max_cards = classic;
                 round_player_id = current;
             } else {
-                let cycle_1 = env::cycle_count();
-
                 if let PlayAction::PLAY = player.action {
                     let play_crypto_cards = player.play_crypto_cards.clone().unwrap().to_vec();
                     crypto_cards.extend(play_crypto_cards.clone());
@@ -93,7 +88,7 @@ pub fn main() {
                     let play_unmasked_cards_vec = play_unmasked_cards.to_vec();
                     unmasked_cards.extend(play_unmasked_cards_vec);
                     let classic = play_unmasked_cards.morph_to_classic().unwrap();
-                    assert!(classic.sanity_check());
+                    assert!(classic.validate_rules());
                     assert!(classic > round_max_cards);
 
                     let hand = input_hand.get_mut(current).unwrap();
@@ -115,7 +110,6 @@ pub fn main() {
                     round_player_id = current;
                 }
 
-                println!("inner i:{} cycle:{}", i, env::cycle_count() - cycle_1);
             }
         }
 

@@ -30,7 +30,7 @@ impl From<PlayAction> for u8 {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct PlayerEnv {
     // The unique identifier for the game room.
     pub room_id: usize,
@@ -223,7 +223,7 @@ impl PlayerEnvBuilder {
         self
     }
 
-    pub fn sanity_check(&self) -> Result<()> {
+    pub fn validate_rules(&self) -> Result<()> {
         match self.inner.action {
             PlayAction::PAAS => {
                 if !self.inner.reveals.is_empty() || self.inner.play_cards.is_some() {
@@ -252,7 +252,7 @@ impl PlayerEnvBuilder {
         key: &KeyPair,
         prng: &mut R,
     ) -> Result<PlayerEnv> {
-        self.sanity_check()?;
+        self.validate_rules()?;
 
         let pack = self.inner.pack();
         let mut msg = vec![Fr::from(pack)];

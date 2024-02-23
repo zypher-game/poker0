@@ -136,7 +136,7 @@ impl SignatureOutsource {
 mod test {
     use crate::public_keys::PublicKeyOutsource;
     use ark_bn254::Fr;
-    use poker_core::task::mock_task;
+    use poker_core::mock_data::mock_task;
     use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
 
     use super::SignatureOutsource;

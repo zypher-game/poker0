@@ -8,7 +8,7 @@ use poker_methods::POKER_METHOD_ELF;
 use risc0_zkvm::{compute_image_id, serde::to_vec, Receipt};
 use std::time::Duration;
 
-pub fn run_bonsai(input_data: &Task0) -> Result<(Receipt, SessionId)> {
+pub fn prove_bonsai(input_data: &Task0) -> Result<(Receipt, SessionId)> {
     let client = bonsai_sdk::Client::from_env(risc0_zkvm::VERSION)
         .map_err(|x| PokerError::BonsaiSdkError(x.to_string()))?;
 
@@ -33,11 +33,6 @@ pub fn run_bonsai(input_data: &Task0) -> Result<(Receipt, SessionId)> {
             .map_err(|x| PokerError::BonsaiSdkError(x.to_string()))?;
 
         if res.status == "RUNNING" {
-            eprintln!(
-                "Current status: {} - state: {} - continue polling...",
-                res.status,
-                res.state.unwrap_or_default()
-            );
             std::thread::sleep(Duration::from_secs(5));
             continue;
         }
@@ -65,8 +60,11 @@ pub fn run_bonsai(input_data: &Task0) -> Result<(Receipt, SessionId)> {
 
 #[cfg(test)]
 mod test {
-    use crate::stark::run_bonsai;
-    use poker_core::task::{mock_task_vec, Task0, TaskCommit};
+    use crate::stark::prove_bonsai;
+    use poker_core::{
+        mock_data::mock_task_vec,
+        task::{Task0, TaskCommit},
+    };
     use poker_methods::POKER_METHOD_ID;
     use risc0_zkvm::serde::from_slice;
     use std::time::Instant;
@@ -77,7 +75,7 @@ mod test {
         let task: Task0 = from_slice(&task_bytes).unwrap();
 
         let start = Instant::now();
-        let (receipt, _) = run_bonsai(&task).unwrap();
+        let (receipt, _) = prove_bonsai(&task).unwrap();
         println!("Prover time: {:.2?}", start.elapsed());
 
         assert!(receipt.verify(POKER_METHOD_ID).is_ok());
