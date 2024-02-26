@@ -135,6 +135,12 @@ pub struct EncodingCard(
 );
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
+pub struct RevealCard(
+    #[serde(serialize_with = "ark_serialize", deserialize_with = "ark_deserialize")]
+    pub  EdwardsAffine,
+);
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Default)]
 pub struct CryptoCard(pub CiphertextAffineRepr);
 
 impl CryptoCard {

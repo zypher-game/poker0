@@ -9,7 +9,7 @@ use zshuffle::{
 };
 
 use crate::{
-    cards::{CryptoCard, EncodingCard, ENCODING_CARDS_MAPPING},
+    cards::{CryptoCard, RevealCard, ENCODING_CARDS_MAPPING},
     combination::CryptoCardCombination,
     play::{PlayAction, PlayerEnvBuilder},
     schnorr::KeyPair,
@@ -74,17 +74,17 @@ pub fn mock_task() -> Task {
             card,
             vec![
                 (
-                    EncodingCard(reveal_card_a.into_affine()),
+                    RevealCard(reveal_card_a.into_affine()),
                     reveal_proof_a,
                     alice.get_public_key(),
                 ),
                 (
-                    EncodingCard(reveal_card_b.into_affine()),
+                    RevealCard(reveal_card_b.into_affine()),
                     reveal_proof_b,
                     bob.get_public_key(),
                 ),
                 (
-                    EncodingCard(reveal_card_c.into_affine()),
+                    RevealCard(reveal_card_c.into_affine()),
                     reveal_proof_c,
                     charlie.get_public_key(),
                 ),
@@ -112,17 +112,17 @@ pub fn mock_task() -> Task {
             card,
             vec![
                 (
-                    EncodingCard(reveal_card_a.into_affine()),
+                    RevealCard(reveal_card_a.into_affine()),
                     reveal_proof_a,
                     alice.get_public_key(),
                 ),
                 (
-                    EncodingCard(reveal_card_c.into_affine()),
+                    RevealCard(reveal_card_c.into_affine()),
                     reveal_proof_c,
                     charlie.get_public_key(),
                 ),
                 (
-                    EncodingCard(reveal_card_b.into_affine()),
+                    RevealCard(reveal_card_b.into_affine()),
                     reveal_proof_b,
                     bob.get_public_key(),
                 ),
@@ -150,17 +150,17 @@ pub fn mock_task() -> Task {
             card,
             vec![
                 (
-                    EncodingCard(reveal_card_a.into_affine()),
+                    RevealCard(reveal_card_a.into_affine()),
                     reveal_proof_a,
                     alice.get_public_key(),
                 ),
                 (
-                    EncodingCard(reveal_card_b.into_affine()),
+                    RevealCard(reveal_card_b.into_affine()),
                     reveal_proof_b,
                     bob.get_public_key(),
                 ),
                 (
-                    EncodingCard(reveal_card_c.into_affine()),
+                    RevealCard(reveal_card_c.into_affine()),
                     reveal_proof_c,
                     charlie.get_public_key(),
                 ),

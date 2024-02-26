@@ -1,5 +1,5 @@
 use crate::{
-    cards::EncodingCard,
+    cards::{EncodingCard, RevealCard},
     combination::{CryptoCardCombination, EncodingCardCombination},
     errors::{PokerError, Result},
     schnorr::{KeyPair, PublicKey, Signature},
@@ -40,8 +40,8 @@ pub struct PlayerEnv {
     pub turn_id: u8,
     pub action: PlayAction,
     pub play_cards: Option<CryptoCardCombination>,
-    //  pub reveal: Vec<(EncodingCard, RevealProof, PublicKey)>,
-    pub reveals: Vec<Vec<(EncodingCard, RevealProof, PublicKey)>>,
+    // Note! The order of revealing is based on the order of the players.
+    pub reveals: Vec<Vec<(RevealCard, RevealProof, PublicKey)>>,
     // Currently using schnorr signatures, with plans to transition to aggregated signatures in the future.
     pub signature: Signature,
 }
@@ -223,7 +223,7 @@ impl PlayerEnvBuilder {
         self
     }
 
-    pub fn reveals(mut self, reveals: &[Vec<(EncodingCard, RevealProof, PublicKey)>]) -> Self {
+    pub fn reveals(mut self, reveals: &[Vec<(RevealCard, RevealProof, PublicKey)>]) -> Self {
         self.inner.reveals = reveals.to_vec();
         self
     }
@@ -299,15 +299,5 @@ mod test {
             .unwrap();
 
         assert!(player.verify_sign(&key_pair.get_public_key()).is_ok());
-    }
-
-    #[test]
-    fn t() {
-        let x = (1 as u128)
-            + (((u8::MAX - 4) as u128) << 8)
-            + (((u8::MAX - 2) as u128) << 16)
-            + ((u64::MAX as u128) << 24);
-
-        println!("{:?}", x.to_be_bytes())
     }
 }
