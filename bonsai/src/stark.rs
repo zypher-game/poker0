@@ -62,7 +62,7 @@ pub fn prove_bonsai(input_data: &Task0) -> Result<(Receipt, SessionId)> {
 mod test {
     use crate::stark::prove_bonsai;
     use poker_core::{
-        mock_data::mock_task_vec,
+        mock_data::task0::mock_task0,
         task::{Task0, TaskCommit},
     };
     use poker_methods::POKER_METHOD_ID;
@@ -71,7 +71,7 @@ mod test {
 
     #[test]
     fn bonsai_sdk_test() {
-        let task_bytes = mock_task_vec();
+        let task_bytes = mock_task0();
         let task: Task0 = from_slice(&task_bytes).unwrap();
 
         let start = Instant::now();

@@ -45,7 +45,7 @@ mod test {
     use hex::FromHex;
     use num_bigint::BigInt;
     use poker_core::{
-        mock_data::{mock_journal, mock_task_vec},
+        mock_data::{journal::mock_journal, task0::mock_task0},
         task::{Task0, TaskCommit},
     };
     use poker_methods::POKER_METHOD_ID;
@@ -91,7 +91,7 @@ mod test {
 
     #[test]
     fn stark_to_snark_test() {
-        let task_bytes = mock_task_vec();
+        let task_bytes = mock_task0();
         let task: Task0 = from_slice(&task_bytes).unwrap();
 
         let start = Instant::now();
@@ -155,7 +155,7 @@ mod test {
 
     #[test]
     fn onchain_verify_test() {
-        let task_bytes = mock_task_vec();
+        let task_bytes = mock_task0();
         let task: Task0 = from_slice(&task_bytes).unwrap();
 
         let start = Instant::now();
@@ -197,7 +197,7 @@ mod test {
         let journal_byte32 = mock_journal();
         // println!("{:?}",journal_byte32);
         let journal_bytes: Vec<u8> = bytemuck::cast_slice(&journal_byte32).to_vec();
-        // println!("{:?}", journal_bytes);
+        println!("{:?}", journal_bytes);
         let commit: TaskCommit = from_slice(&journal_byte32).unwrap();
 
         let vec = to_vec(&commit).unwrap();
@@ -210,7 +210,8 @@ mod test {
         let mut y1 = vec![];
         x1.serialize_uncompressed(&mut y1).unwrap();
 
-        println!("y1:{:?}", y1)
+        println!("y0:{:?}", y0);
+        println!("y1:{:?}", y1);
 
         //  println!("{:?}",commit);
     }

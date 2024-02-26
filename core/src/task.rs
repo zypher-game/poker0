@@ -152,7 +152,7 @@ impl Task {
 
 #[cfg(test)]
 mod test {
-    use crate::mock_data::mock_task;
+    use crate::mock_data::task::mock_task;
 
     #[test]
     fn test_verify_task() {

@@ -1,7 +1,7 @@
 use std::ops::{Mul, Sub};
 
 use ark_ec::{AffineRepr, CurveGroup};
-use ark_ed_on_bn254::{EdwardsAffine, EdwardsProjective};
+use ark_ed_on_bn254::EdwardsProjective;
 use ark_ff::UniformRand;
 use ark_std::rand::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
