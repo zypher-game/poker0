@@ -8,7 +8,7 @@ use crate::{
     combination::Combination::*,
     errors::{PokerError, Result},
 };
-use ark_ec::{AffineRepr, CurveGroup};
+use ark_ec::AffineRepr;
 use ark_std::iterable::Iterable;
 use serde::{Deserialize, Serialize};
 
@@ -420,39 +420,39 @@ impl EncodingCardCombination {
     pub fn flatten(&self) -> Vec<ark_bn254::Fr> {
         match self {
             Single(c) => {
-                let (x, y) = c.0.into_affine().xy().unwrap();
+                let (x, y) = c.0.xy().unwrap();
                 vec![x, y]
             }
             Pair(c1, c2) => {
-                let (x1, y1) = c1.0.into_affine().xy().unwrap();
-                let (x2, y2) = c2.0.into_affine().xy().unwrap();
+                let (x1, y1) = c1.0.xy().unwrap();
+                let (x2, y2) = c2.0.xy().unwrap();
                 vec![x1, y1, x2, y2]
             }
             ThreeOfAKind(c1, c2, c3) => {
-                let (x1, y1) = c1.0.into_affine().xy().unwrap();
-                let (x2, y2) = c2.0.into_affine().xy().unwrap();
-                let (x3, y3) = c3.0.into_affine().xy().unwrap();
+                let (x1, y1) = c1.0.xy().unwrap();
+                let (x2, y2) = c2.0.xy().unwrap();
+                let (x3, y3) = c3.0.xy().unwrap();
                 vec![x1, y1, x2, y2, x3, y3]
             }
             ThreeWithOne(c1, c2, c3, c4) => {
-                let (x1, y1) = c1.0.into_affine().xy().unwrap();
-                let (x2, y2) = c2.0.into_affine().xy().unwrap();
-                let (x3, y3) = c3.0.into_affine().xy().unwrap();
-                let (x4, y4) = c4.0.into_affine().xy().unwrap();
+                let (x1, y1) = c1.0.xy().unwrap();
+                let (x2, y2) = c2.0.xy().unwrap();
+                let (x3, y3) = c3.0.xy().unwrap();
+                let (x4, y4) = c4.0.xy().unwrap();
                 vec![x1, y1, x2, y2, x3, y3, x4, y4]
             }
             ThreeWithPair(c1, c2, c3, c4, c5) => {
-                let (x1, y1) = c1.0.into_affine().xy().unwrap();
-                let (x2, y2) = c2.0.into_affine().xy().unwrap();
-                let (x3, y3) = c3.0.into_affine().xy().unwrap();
-                let (x4, y4) = c4.0.into_affine().xy().unwrap();
-                let (x5, y5) = c5.0.into_affine().xy().unwrap();
+                let (x1, y1) = c1.0.xy().unwrap();
+                let (x2, y2) = c2.0.xy().unwrap();
+                let (x3, y3) = c3.0.xy().unwrap();
+                let (x4, y4) = c4.0.xy().unwrap();
+                let (x5, y5) = c5.0.xy().unwrap();
                 vec![x1, y1, x2, y2, x3, y3, x4, y4, x5, y5]
             }
             Straight(c) => {
                 let mut res = vec![];
                 for i in c.iter() {
-                    let (x, y) = i.0.into_affine().xy().unwrap();
+                    let (x, y) = i.0.xy().unwrap();
                     res.push(x);
                     res.push(y)
                 }
@@ -461,8 +461,8 @@ impl EncodingCardCombination {
             DoubleStraight(c) => {
                 let mut res = vec![];
                 for (i1, i2) in c.iter() {
-                    let (x1, y1) = i1.0.into_affine().xy().unwrap();
-                    let (x2, y2) = i2.0.into_affine().xy().unwrap();
+                    let (x1, y1) = i1.0.xy().unwrap();
+                    let (x2, y2) = i2.0.xy().unwrap();
                     res.push(x1);
                     res.push(y1);
                     res.push(x2);
@@ -473,9 +473,9 @@ impl EncodingCardCombination {
             TripleStraight(c) => {
                 let mut res = vec![];
                 for (i1, i2, i3) in c.iter() {
-                    let (x1, y1) = i1.0.into_affine().xy().unwrap();
-                    let (x2, y2) = i2.0.into_affine().xy().unwrap();
-                    let (x3, y3) = i3.0.into_affine().xy().unwrap();
+                    let (x1, y1) = i1.0.xy().unwrap();
+                    let (x2, y2) = i2.0.xy().unwrap();
+                    let (x3, y3) = i3.0.xy().unwrap();
                     res.push(x1);
                     res.push(y1);
                     res.push(x2);
@@ -488,10 +488,10 @@ impl EncodingCardCombination {
             TripleStraightWithOne(c) => {
                 let mut res = vec![];
                 for (i1, i2, i3, i4) in c.iter() {
-                    let (x1, y1) = i1.0.into_affine().xy().unwrap();
-                    let (x2, y2) = i2.0.into_affine().xy().unwrap();
-                    let (x3, y3) = i3.0.into_affine().xy().unwrap();
-                    let (x4, y4) = i4.0.into_affine().xy().unwrap();
+                    let (x1, y1) = i1.0.xy().unwrap();
+                    let (x2, y2) = i2.0.xy().unwrap();
+                    let (x3, y3) = i3.0.xy().unwrap();
+                    let (x4, y4) = i4.0.xy().unwrap();
                     res.push(x1);
                     res.push(y1);
                     res.push(x2);
@@ -506,11 +506,11 @@ impl EncodingCardCombination {
             TripleStraightWithPair(c) => {
                 let mut res = vec![];
                 for (i1, i2, i3, i4, i5) in c.iter() {
-                    let (x1, y1) = i1.0.into_affine().xy().unwrap();
-                    let (x2, y2) = i2.0.into_affine().xy().unwrap();
-                    let (x3, y3) = i3.0.into_affine().xy().unwrap();
-                    let (x4, y4) = i4.0.into_affine().xy().unwrap();
-                    let (x5, y5) = i5.0.into_affine().xy().unwrap();
+                    let (x1, y1) = i1.0.xy().unwrap();
+                    let (x2, y2) = i2.0.xy().unwrap();
+                    let (x3, y3) = i3.0.xy().unwrap();
+                    let (x4, y4) = i4.0.xy().unwrap();
+                    let (x5, y5) = i5.0.xy().unwrap();
                     res.push(x1);
                     res.push(y1);
                     res.push(x2);
@@ -526,37 +526,37 @@ impl EncodingCardCombination {
                 res
             }
             FourWithTwoSingle(c1, c2, c3, c4, c5, c6) => {
-                let (x1, y1) = c1.0.into_affine().xy().unwrap();
-                let (x2, y2) = c2.0.into_affine().xy().unwrap();
-                let (x3, y3) = c3.0.into_affine().xy().unwrap();
-                let (x4, y4) = c4.0.into_affine().xy().unwrap();
-                let (x5, y5) = c5.0.into_affine().xy().unwrap();
-                let (x6, y6) = c6.0.into_affine().xy().unwrap();
+                let (x1, y1) = c1.0.xy().unwrap();
+                let (x2, y2) = c2.0.xy().unwrap();
+                let (x3, y3) = c3.0.xy().unwrap();
+                let (x4, y4) = c4.0.xy().unwrap();
+                let (x5, y5) = c5.0.xy().unwrap();
+                let (x6, y6) = c6.0.xy().unwrap();
                 vec![x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6]
             }
             FourWithTwoPairs(c1, c2, c3, c4, c5, c6, c7, c8) => {
-                let (x1, y1) = c1.0.into_affine().xy().unwrap();
-                let (x2, y2) = c2.0.into_affine().xy().unwrap();
-                let (x3, y3) = c3.0.into_affine().xy().unwrap();
-                let (x4, y4) = c4.0.into_affine().xy().unwrap();
-                let (x5, y5) = c5.0.into_affine().xy().unwrap();
-                let (x6, y6) = c6.0.into_affine().xy().unwrap();
-                let (x7, y7) = c7.0.into_affine().xy().unwrap();
-                let (x8, y8) = c8.0.into_affine().xy().unwrap();
+                let (x1, y1) = c1.0.xy().unwrap();
+                let (x2, y2) = c2.0.xy().unwrap();
+                let (x3, y3) = c3.0.xy().unwrap();
+                let (x4, y4) = c4.0.xy().unwrap();
+                let (x5, y5) = c5.0.xy().unwrap();
+                let (x6, y6) = c6.0.xy().unwrap();
+                let (x7, y7) = c7.0.xy().unwrap();
+                let (x8, y8) = c8.0.xy().unwrap();
                 vec![
                     x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6, x7, y7, x8, y8,
                 ]
             }
             Bomb(c1, c2, c3, c4) => {
-                let (x1, y1) = c1.0.into_affine().xy().unwrap();
-                let (x2, y2) = c2.0.into_affine().xy().unwrap();
-                let (x3, y3) = c3.0.into_affine().xy().unwrap();
-                let (x4, y4) = c4.0.into_affine().xy().unwrap();
+                let (x1, y1) = c1.0.xy().unwrap();
+                let (x2, y2) = c2.0.xy().unwrap();
+                let (x3, y3) = c3.0.xy().unwrap();
+                let (x4, y4) = c4.0.xy().unwrap();
                 vec![x1, y1, x2, y2, x3, y3, x4, y4]
             }
             Rocket(c1, c2) => {
-                let (x1, y1) = c1.0.into_affine().xy().unwrap();
-                let (x2, y2) = c2.0.into_affine().xy().unwrap();
+                let (x1, y1) = c1.0.xy().unwrap();
+                let (x2, y2) = c2.0.xy().unwrap();
                 vec![x1, y1, x2, y2]
             }
         }

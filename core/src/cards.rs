@@ -1,11 +1,12 @@
 use hashbrown::HashMap;
 
-use ark_ed_on_bn254::{EdwardsAffine, EdwardsProjective};
+use ark_ed_on_bn254::EdwardsAffine;
 use ark_ff::MontFp;
 use rand_chacha::rand_core::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
 use zplonk::utils::serialization::{ark_deserialize, ark_serialize};
-use zshuffle::Ciphertext;
+
+use crate::CiphertextAffineRepr;
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum Suite {
@@ -130,20 +131,20 @@ impl std::fmt::Debug for ClassicCard {
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
 pub struct EncodingCard(
     #[serde(serialize_with = "ark_serialize", deserialize_with = "ark_deserialize")]
-    pub  EdwardsProjective,
+    pub  EdwardsAffine,
 );
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
-pub struct CryptoCard(pub Ciphertext<EdwardsProjective>);
+pub struct CryptoCard(pub CiphertextAffineRepr);
 
 impl CryptoCard {
     pub fn rand<R: CryptoRng + RngCore>(prng: &mut R) -> Self {
-        Self(Ciphertext::<EdwardsProjective>::rand(prng))
+        Self(CiphertextAffineRepr::rand(prng))
     }
 }
 
 lazy_static! {
-    pub static ref ENCODING_CARDS_MAPPING: HashMap<zshuffle::Card, ClassicCard> = {
+    pub static ref ENCODING_CARDS_MAPPING: HashMap<EdwardsAffine, ClassicCard> = {
         let point = vec![
             (
                 MontFp!(
@@ -565,8 +566,8 @@ lazy_static! {
 
         let encoding_card = point
             .into_iter()
-            .map(|(x, y)| EdwardsAffine::new_unchecked(x, y).into())
-            .collect::<Vec<EdwardsProjective>>();
+            .map(|(x, y)| EdwardsAffine::new_unchecked(x, y))
+            .collect::<Vec<EdwardsAffine>>();
 
         let mut map = HashMap::new();
 

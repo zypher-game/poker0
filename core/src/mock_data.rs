@@ -1,3 +1,4 @@
+use ark_ec::CurveGroup;
 use ark_ed_on_bn254::EdwardsProjective;
 use ark_std::rand::SeedableRng;
 use hashbrown::HashMap;
@@ -13,6 +14,7 @@ use crate::{
     play::{PlayAction, PlayerEnvBuilder},
     schnorr::KeyPair,
     task::Task,
+    CiphertextAffine,
 };
 
 pub fn mock_task() -> Task {
@@ -63,24 +65,26 @@ pub fn mock_task() -> Task {
         let reveals = vec![reveal_card_b, reveal_card_a, reveal_card_c];
         let unmasked_card = unmask(card, &reveals).unwrap();
 
-        let opened_card = ENCODING_CARDS_MAPPING.get(&unmasked_card).unwrap();
+        let opened_card = ENCODING_CARDS_MAPPING
+            .get(&unmasked_card.into_affine())
+            .unwrap();
         a_card.push(opened_card);
 
         reveal_proofs.insert(
             card,
             vec![
                 (
-                    EncodingCard(reveal_card_a),
+                    EncodingCard(reveal_card_a.into_affine()),
                     reveal_proof_a,
                     alice.get_public_key(),
                 ),
                 (
-                    EncodingCard(reveal_card_b),
+                    EncodingCard(reveal_card_b.into_affine()),
                     reveal_proof_b,
                     bob.get_public_key(),
                 ),
                 (
-                    EncodingCard(reveal_card_c),
+                    EncodingCard(reveal_card_c.into_affine()),
                     reveal_proof_c,
                     charlie.get_public_key(),
                 ),
@@ -99,24 +103,26 @@ pub fn mock_task() -> Task {
         let reveals = vec![reveal_card_b, reveal_card_a, reveal_card_c];
         let unmasked_card = unmask(card, &reveals).unwrap();
 
-        let opened_card = ENCODING_CARDS_MAPPING.get(&unmasked_card).unwrap();
+        let opened_card = ENCODING_CARDS_MAPPING
+            .get(&unmasked_card.into_affine())
+            .unwrap();
         b_card.push(opened_card);
 
         reveal_proofs.insert(
             card,
             vec![
                 (
-                    EncodingCard(reveal_card_a),
+                    EncodingCard(reveal_card_a.into_affine()),
                     reveal_proof_a,
                     alice.get_public_key(),
                 ),
                 (
-                    EncodingCard(reveal_card_c),
+                    EncodingCard(reveal_card_c.into_affine()),
                     reveal_proof_c,
                     charlie.get_public_key(),
                 ),
                 (
-                    EncodingCard(reveal_card_b),
+                    EncodingCard(reveal_card_b.into_affine()),
                     reveal_proof_b,
                     bob.get_public_key(),
                 ),
@@ -135,24 +141,26 @@ pub fn mock_task() -> Task {
         let reveals = vec![reveal_card_b, reveal_card_a, reveal_card_c];
         let unmasked_card = unmask(card, &reveals).unwrap();
 
-        let opened_card = ENCODING_CARDS_MAPPING.get(&unmasked_card).unwrap();
+        let opened_card = ENCODING_CARDS_MAPPING
+            .get(&unmasked_card.into_affine())
+            .unwrap();
         c_card.push(opened_card);
 
         reveal_proofs.insert(
             card,
             vec![
                 (
-                    EncodingCard(reveal_card_a),
+                    EncodingCard(reveal_card_a.into_affine()),
                     reveal_proof_a,
                     alice.get_public_key(),
                 ),
                 (
-                    EncodingCard(reveal_card_b),
+                    EncodingCard(reveal_card_b.into_affine()),
                     reveal_proof_b,
                     bob.get_public_key(),
                 ),
                 (
-                    EncodingCard(reveal_card_c),
+                    EncodingCard(reveal_card_c.into_affine()),
                     reveal_proof_c,
                     charlie.get_public_key(),
                 ),
@@ -167,9 +175,18 @@ pub fn mock_task() -> Task {
     ];
 
     let players_hand = vec![
-        alice_deck.iter().map(|x| CryptoCard(*x)).collect(),
-        bob_deck.iter().map(|x| CryptoCard(*x)).collect(),
-        charlie_deck.iter().map(|x| CryptoCard(*x)).collect(),
+        alice_deck
+            .iter()
+            .map(|x| CryptoCard(CiphertextAffine::from(*x)))
+            .collect(),
+        bob_deck
+            .iter()
+            .map(|x| CryptoCard(CiphertextAffine::from(*x)))
+            .collect(),
+        charlie_deck
+            .iter()
+            .map(|x| CryptoCard(CiphertextAffine::from(*x)))
+            .collect(),
     ];
 
     //  ---------------round 0--------------------
@@ -179,10 +196,10 @@ pub fn mock_task() -> Task {
         .turn_id(0)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::ThreeWithOne(
-            CryptoCard(alice_deck[8]),
-            CryptoCard(alice_deck[12]),
-            CryptoCard(alice_deck[14]),
-            CryptoCard(alice_deck[4]),
+            CryptoCard(alice_deck[8].into()),
+            CryptoCard(alice_deck[12].into()),
+            CryptoCard(alice_deck[14].into()),
+            CryptoCard(alice_deck[4].into()),
         )))
         .reveals(&[
             reveal_proofs.get(&alice_deck[8]).unwrap().clone(),
@@ -218,8 +235,8 @@ pub fn mock_task() -> Task {
         .turn_id(0)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
-            CryptoCard(alice_deck[6]),
-            CryptoCard(alice_deck[17]),
+            CryptoCard(alice_deck[6].into()),
+            CryptoCard(alice_deck[17].into()),
         )))
         .reveals(&[
             reveal_proofs.get(&alice_deck[6]).unwrap().clone(),
@@ -234,8 +251,8 @@ pub fn mock_task() -> Task {
         .turn_id(0)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
-            CryptoCard(bob_deck[0]),
-            CryptoCard(bob_deck[10]),
+            CryptoCard(bob_deck[0].into()),
+            CryptoCard(bob_deck[10].into()),
         )))
         .reveals(&[
             reveal_proofs.get(&bob_deck[0]).unwrap().clone(),
@@ -250,8 +267,8 @@ pub fn mock_task() -> Task {
         .turn_id(0)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
-            CryptoCard(charlie_deck[2]),
-            CryptoCard(charlie_deck[11]),
+            CryptoCard(charlie_deck[2].into()),
+            CryptoCard(charlie_deck[11].into()),
         )))
         .reveals(&[
             reveal_proofs.get(&charlie_deck[2]).unwrap().clone(),
@@ -266,8 +283,8 @@ pub fn mock_task() -> Task {
         .turn_id(1)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
-            CryptoCard(alice_deck[7]),
-            CryptoCard(alice_deck[13]),
+            CryptoCard(alice_deck[7].into()),
+            CryptoCard(alice_deck[13].into()),
         )))
         .reveals(&[
             reveal_proofs.get(&alice_deck[7]).unwrap().clone(),
@@ -290,8 +307,8 @@ pub fn mock_task() -> Task {
         .turn_id(1)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
-            CryptoCard(charlie_deck[5]),
-            CryptoCard(charlie_deck[13]),
+            CryptoCard(charlie_deck[5].into()),
+            CryptoCard(charlie_deck[13].into()),
         )))
         .reveals(&[
             reveal_proofs.get(&charlie_deck[5]).unwrap().clone(),
@@ -306,8 +323,8 @@ pub fn mock_task() -> Task {
         .turn_id(2)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
-            CryptoCard(alice_deck[5]),
-            CryptoCard(alice_deck[11]),
+            CryptoCard(alice_deck[5].into()),
+            CryptoCard(alice_deck[11].into()),
         )))
         .reveals(&[
             reveal_proofs.get(&alice_deck[5]).unwrap().clone(),
@@ -330,8 +347,8 @@ pub fn mock_task() -> Task {
         .turn_id(2)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
-            CryptoCard(charlie_deck[3]),
-            CryptoCard(charlie_deck[6]),
+            CryptoCard(charlie_deck[3].into()),
+            CryptoCard(charlie_deck[6].into()),
         )))
         .reveals(&[
             reveal_proofs.get(&charlie_deck[3]).unwrap().clone(),
@@ -346,8 +363,8 @@ pub fn mock_task() -> Task {
         .turn_id(3)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
-            CryptoCard(alice_deck[2]),
-            CryptoCard(alice_deck[3]),
+            CryptoCard(alice_deck[2].into()),
+            CryptoCard(alice_deck[3].into()),
         )))
         .reveals(&[
             reveal_proofs.get(&alice_deck[2]).unwrap().clone(),
@@ -362,8 +379,8 @@ pub fn mock_task() -> Task {
         .turn_id(3)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
-            CryptoCard(bob_deck[6]),
-            CryptoCard(bob_deck[8]),
+            CryptoCard(bob_deck[6].into()),
+            CryptoCard(bob_deck[8].into()),
         )))
         .reveals(&[
             reveal_proofs.get(&bob_deck[6]).unwrap().clone(),
@@ -411,7 +428,7 @@ pub fn mock_task() -> Task {
         .turn_id(0)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Single(CryptoCard(
-            bob_deck[12],
+            bob_deck[12].into(),
         ))))
         .reveals(&[reveal_proofs.get(&bob_deck[12]).unwrap().clone()])
         .build_and_sign(&bob, &mut rng)
@@ -423,7 +440,7 @@ pub fn mock_task() -> Task {
         .turn_id(0)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Single(CryptoCard(
-            charlie_deck[15],
+            charlie_deck[15].into(),
         ))))
         .reveals(&[reveal_proofs.get(&charlie_deck[15]).unwrap().clone()])
         .build_and_sign(&charlie, &mut rng)
@@ -454,11 +471,11 @@ pub fn mock_task() -> Task {
         .turn_id(0)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Straight(vec![
-            CryptoCard(charlie_deck[7]),
-            CryptoCard(charlie_deck[1]),
-            CryptoCard(charlie_deck[10]),
-            CryptoCard(charlie_deck[4]),
-            CryptoCard(charlie_deck[9]),
+            CryptoCard(charlie_deck[7].into()),
+            CryptoCard(charlie_deck[1].into()),
+            CryptoCard(charlie_deck[10].into()),
+            CryptoCard(charlie_deck[4].into()),
+            CryptoCard(charlie_deck[9].into()),
         ])))
         .reveals(&[
             reveal_proofs.get(&charlie_deck[7]).unwrap().clone(),
@@ -484,11 +501,11 @@ pub fn mock_task() -> Task {
         .turn_id(0)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Straight(vec![
-            CryptoCard(bob_deck[5]),
-            CryptoCard(bob_deck[16]),
-            CryptoCard(bob_deck[15]),
-            CryptoCard(bob_deck[1]),
-            CryptoCard(bob_deck[2]),
+            CryptoCard(bob_deck[5].into()),
+            CryptoCard(bob_deck[16].into()),
+            CryptoCard(bob_deck[15].into()),
+            CryptoCard(bob_deck[1].into()),
+            CryptoCard(bob_deck[2].into()),
         ])))
         .reveals(&[
             reveal_proofs.get(&bob_deck[5]).unwrap().clone(),
@@ -531,12 +548,12 @@ pub fn mock_task() -> Task {
         .turn_id(0)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::FourWithTwoSingle(
-            CryptoCard(bob_deck[3]),
-            CryptoCard(bob_deck[13]),
-            CryptoCard(bob_deck[14]),
-            CryptoCard(bob_deck[11]),
-            CryptoCard(bob_deck[4]),
-            CryptoCard(bob_deck[7]),
+            CryptoCard(bob_deck[3].into()),
+            CryptoCard(bob_deck[13].into()),
+            CryptoCard(bob_deck[14].into()),
+            CryptoCard(bob_deck[11].into()),
+            CryptoCard(bob_deck[4].into()),
+            CryptoCard(bob_deck[7].into()),
         )))
         .reveals(&[
             reveal_proofs.get(&bob_deck[3]).unwrap().clone(),
@@ -574,7 +591,9 @@ pub fn mock_task() -> Task {
         .round_id(5)
         .turn_id(0)
         .action(PlayAction::PLAY)
-        .play_cards(Some(CryptoCardCombination::Single(CryptoCard(bob_deck[9]))))
+        .play_cards(Some(CryptoCardCombination::Single(CryptoCard(
+            bob_deck[9].into(),
+        ))))
         .reveals(&[reveal_proofs.get(&bob_deck[9]).unwrap().clone()])
         .build_and_sign(&bob, &mut rng)
         .unwrap();

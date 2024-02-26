@@ -5,7 +5,7 @@ use crate::{
     schnorr::{KeyPair, PublicKey, Signature},
 };
 use ark_bn254::Fr;
-use ark_ec::AdditiveGroup;
+use ark_ec::{AdditiveGroup, CurveGroup};
 use rand_chacha::rand_core::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
 use zshuffle::{
@@ -150,14 +150,19 @@ impl PlayerEnv {
         for (reveals, card) in self.reveals.iter().zip(cards.iter()) {
             let mut reveal_cards = Vec::new();
             for reveal in reveals.iter() {
-                verify_reveal0(&reveal.2.get_raw(), &card.0, &reveal.0 .0, &reveal.1)
-                    .map_err(|_| PokerError::VerifyReVealError)?;
-                reveal_cards.push(reveal.0 .0);
+                verify_reveal0(
+                    &reveal.2.get_raw(),
+                    &card.0.to_ciphertext(),
+                    &reveal.0 .0.into(),
+                    &reveal.1,
+                )
+                .map_err(|_| PokerError::VerifyReVealError)?;
+                reveal_cards.push(reveal.0 .0.into());
             }
 
-            let unmasked_card =
-                unmask(&card.0, &reveal_cards).map_err(|_| PokerError::UnmaskCardError)?;
-            unmasked_cards.push(EncodingCard(unmasked_card));
+            let unmasked_card = unmask(&card.0.to_ciphertext(), &reveal_cards)
+                .map_err(|_| PokerError::UnmaskCardError)?;
+            unmasked_cards.push(EncodingCard(unmasked_card.into_affine()));
         }
 
         Ok(unmasked_cards)

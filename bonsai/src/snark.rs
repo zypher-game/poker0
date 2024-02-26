@@ -197,7 +197,7 @@ mod test {
         let journal_byte32 = mock_journal();
         // println!("{:?}",journal_byte32);
         let journal_bytes: Vec<u8> = bytemuck::cast_slice(&journal_byte32).to_vec();
-       // println!("{:?}", journal_bytes);
+        // println!("{:?}", journal_bytes);
         let commit: TaskCommit = from_slice(&journal_byte32).unwrap();
 
         let vec = to_vec(&commit).unwrap();
