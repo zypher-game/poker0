@@ -15,3 +15,4 @@ ark-ed-on-bn254 = { workspace = true }
 ark-bn254 = { workspace = true }
 num-bigint = "0.4.3"
 num-integer = "0.1.45"
+rand_chacha =  "0.3"

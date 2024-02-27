@@ -1,13 +1,14 @@
 use ark_bn254::Fr;
-use ark_ed_on_bn254::EdwardsAffine;
+use ark_ed_on_bn254::EdwardsProjective;
 use poker_core::cards::{CryptoCard, RevealCard};
 use std::ops::Neg;
 use zplonk::turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS};
 
+#[derive(Default, Clone)]
 pub struct UnmaskOutsource {
     pub crypto_card: CryptoCard,
     pub reveal_cards: Vec<RevealCard>,
-    pub unmasked_card: EdwardsAffine,
+    pub unmasked_card: EdwardsProjective,
 
     pub crypto_card_var: (PointVar, PointVar),
     pub reveal_card_vars: Vec<PointVar>,
@@ -17,23 +18,29 @@ pub struct UnmaskOutsource {
 impl UnmaskOutsource {
     pub fn new(
         crypto_card: &CryptoCard,
-        crypto_card_var: (PointVar, PointVar),
         reveal_cards: &[RevealCard],
-        reveal_card_vars: &[PointVar],
-        unmasked_card: &EdwardsAffine,
+        unmasked_card: &EdwardsProjective,
     ) -> Self {
         Self {
             crypto_card: *crypto_card,
             reveal_cards: reveal_cards.to_vec(),
             unmasked_card: *unmasked_card,
-            crypto_card_var,
-            reveal_card_vars: reveal_card_vars.to_vec(),
+            crypto_card_var: (PointVar::default(), PointVar::default()),
+            reveal_card_vars: vec![],
             unmasked_card_var: PointVar::default(),
         }
     }
 
+    pub fn set_crypto_card_var(&mut self, var: (PointVar, PointVar)) {
+        self.crypto_card_var = var
+    }
+
+    pub fn set_reveal_cards_var(&mut self, var: &[PointVar]) {
+        self.reveal_card_vars = var.to_vec()
+    }
+
     pub fn generate_constraints(&mut self, cs: &mut TurboCS<Fr>) {
-        self.unmasked_card_var = cs.new_point_variable(self.unmasked_card.into());
+        self.unmasked_card_var = cs.new_point_variable(self.unmasked_card);
 
         let mut sum = self.reveal_cards[0].0.into();
         let mut sum_var = self.reveal_card_vars[0];
@@ -79,7 +86,6 @@ mod test {
         public_keys::PublicKeyOutsource, reveals::RevealOutsource, unmask::UnmaskOutsource,
     };
     use ark_bn254::Fr;
-    use ark_ec::CurveGroup;
     use poker_core::mock_data::task::mock_task;
     use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
 
@@ -104,13 +110,9 @@ mod test {
         let reveal_cards_projective = reveal_cards.iter().map(|x| x.0.into()).collect::<Vec<_>>();
         let unmasked_card =
             zshuffle::reveal::unmask(&card.0.to_ciphertext(), &reveal_cards_projective).unwrap();
-        let mut unmask_outsource = UnmaskOutsource::new(
-            &card,
-            reveal_outsource.crypto_card_var,
-            &reveal_cards,
-            &reveal_outsource.reveal_card_vars,
-            &unmasked_card.into_affine(),
-        );
+        let mut unmask_outsource = UnmaskOutsource::new(&card, &reveal_cards, &unmasked_card);
+        unmask_outsource.set_crypto_card_var(reveal_outsource.crypto_card_var);
+        unmask_outsource.set_reveal_cards_var(&reveal_outsource.reveal_card_vars);
         unmask_outsource.generate_constraints(&mut cs);
         assert_eq!(9, cs.size - size);
 

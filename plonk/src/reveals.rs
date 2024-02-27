@@ -19,7 +19,7 @@ use crate::get_divisor;
 
 use super::public_keys::PublicKeyOutsource;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct RevealOutsource {
     pub crypto_card: CryptoCard,
     pub reveal_cards: Vec<RevealCard>,

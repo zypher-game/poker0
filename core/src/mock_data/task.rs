@@ -117,14 +117,14 @@ pub fn mock_task() -> Task {
                     alice.get_public_key(),
                 ),
                 (
-                    RevealCard(reveal_card_c.into_affine()),
-                    reveal_proof_c,
-                    charlie.get_public_key(),
-                ),
-                (
                     RevealCard(reveal_card_b.into_affine()),
                     reveal_proof_b,
                     bob.get_public_key(),
+                ),
+                (
+                    RevealCard(reveal_card_c.into_affine()),
+                    reveal_proof_c,
+                    charlie.get_public_key(),
                 ),
             ],
         );
