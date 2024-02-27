@@ -874,6 +874,7 @@ dependencies = [
 [[package]]
 name = "zplonk"
 version = "0.1.0"
+source = "git+https://github.com/zypher-game/uzkge?branch=test#14833b5575d739890f1b2a701b5f077c0d9c19c0"
 dependencies = [
  "ark-bn254",
  "ark-ec",
@@ -896,6 +897,7 @@ dependencies = [
 [[package]]
 name = "zshuffle"
 version = "0.1.0"
+source = "git+https://github.com/zypher-game/uzkge?branch=test#14833b5575d739890f1b2a701b5f077c0d9c19c0"
 dependencies = [
  "ark-bn254",
  "ark-ec",

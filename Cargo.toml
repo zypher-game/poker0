@@ -8,6 +8,21 @@ members = [
 ]
 resolver = "2"
 
+[workspace.dependencies]
+poker-methods = { path = "methods" }
+poker-core = { path = "core" }
+risc0-zkvm = { version = "0.20.1", default-features = false }
+risc0-build = { version = "0.20.1" }
+bonsai-sdk = "0.6.1"
+ark-ff = "0.4"
+ark-ec = "0.4"
+ark-bn254 = "0.4"
+ark-ed-on-bn254 = "0.4"
+ark-std = "0.4"
+ark-serialize = { version = "0.4", default-features = false, features = ["derive"] }
+zplonk = { version = "0.1" }
+zshuffle = { version = "0.1" }
+
 [patch.crates-io]
 ark-ff = { git = "https://github.com/confuseSUN/algebra", branch = "test"}
 ark-ec = { git = "https://github.com/confuseSUN/algebra", branch = "test" }
@@ -16,3 +31,5 @@ ark-serialize = { git = "https://github.com/confuseSUN/algebra", branch = "test"
 ark-bn254 = { git = "https://github.com/confuseSUN/algebra", branch = "test"}
 ark-ed-on-bn254 = { git = "https://github.com/confuseSUN/algebra", branch = "test" }
 ark-groth16 = { git = "https://github.com/arkworks-rs/groth16" }
+zplonk = { git = "https://github.com/zypher-game/uzkge", branch = "test" }
+zshuffle = { git = "https://github.com/zypher-game/uzkge", branch = "test" }
