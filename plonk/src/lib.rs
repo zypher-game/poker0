@@ -3,10 +3,14 @@ use ark_ff::PrimeField;
 use num_bigint::BigUint;
 
 pub mod build_cs;
+pub mod gen_params;
 pub mod public_keys;
 pub mod reveals;
 pub mod signatures;
 pub mod unmask;
+
+#[cfg(test)]
+pub mod test;
 
 pub fn get_divisor() -> (Fr, BigUint) {
     let m_bytes = [

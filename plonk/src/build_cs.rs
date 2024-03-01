@@ -37,13 +37,9 @@ pub(crate) fn build_cs(
     let pk_outsources = PublicKeyOutsource::new(&mut cs, &public_keys);
     pk_outsources.prepare_pi_variables(&mut cs);
 
-    let mut i = 0;
     for reveal_outsource in reveal_outsources.iter_mut() {
         reveal_outsource.generate_constraints(&mut cs, &pk_outsources);
         reveal_outsource.prepare_pi_variables(&mut cs);
-
-        println!("cs size :{},{}", cs.size, i);
-        i = i + 1;
     }
 
     for (unmask_outsource, reveal_outsource) in
@@ -55,7 +51,7 @@ pub(crate) fn build_cs(
         unmask_outsource.prepare_pi_variables(&mut cs);
     }
 
-    //   cs.pad();
+    cs.pad();
 
     cs
 }
@@ -131,14 +127,12 @@ pub fn verify_outsource(
 
 #[cfg(test)]
 mod test {
-    use ark_bn254::Fr;
+    use crate::{
+        reveals::RevealOutsource,
+        unmask::UnmaskOutsource,
+    };
     use ark_ec::CurveGroup;
     use poker_core::{mock_data::task::mock_task, play::PlayAction};
-    use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
-
-    use crate::{
-        public_keys::PublicKeyOutsource, reveals::RevealOutsource, unmask::UnmaskOutsource,
-    };
 
     use super::build_cs;
 
