@@ -1,5 +1,9 @@
 use std::ops::Mul;
 
+use crate::{
+    anemoi::{AnemoiJive, AnemoiJive254},
+    turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS},
+};
 use ark_bn254::Fr;
 use ark_ec::AdditiveGroup;
 use ark_ec::{CurveGroup, PrimeGroup};
@@ -8,11 +12,6 @@ use ark_ff::{BigInteger, Field, PrimeField};
 use num_bigint::BigUint;
 use num_integer::Integer;
 use poker_core::cards::{CryptoCard, RevealCard};
-use zplonk::{
-    anemoi::{AnemoiJive, AnemoiJive254},
-    chaum_pedersen::dl::ChaumPedersenDLProof,
-    turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS},
-};
 use zshuffle::RevealProof;
 
 use crate::get_divisor;
@@ -23,7 +22,7 @@ use super::public_keys::PublicKeyOutsource;
 pub struct RevealOutsource {
     pub crypto_card: CryptoCard,
     pub reveal_cards: Vec<RevealCard>,
-    pub proofs: Vec<ChaumPedersenDLProof>,
+    pub proofs: Vec<RevealProof>,
 
     pub crypto_card_var: (PointVar, PointVar),
     pub reveal_card_vars: Vec<PointVar>,
@@ -185,9 +184,9 @@ impl RevealOutsource {
 mod test {
     use super::RevealOutsource;
     use crate::public_keys::PublicKeyOutsource;
+    use crate::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
     use ark_bn254::Fr;
     use poker_core::mock_data::task::mock_task;
-    use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
 
     #[test]
     fn test_reveals_constraint_system() {

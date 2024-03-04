@@ -503,7 +503,7 @@ dependencies = [
  "rand_chacha",
  "serde",
  "serde_json",
- "zplonk",
+ "zplonk 0.1.0",
  "zshuffle",
 ]
 
@@ -874,6 +874,28 @@ dependencies = [
 [[package]]
 name = "zplonk"
 version = "0.1.0"
+dependencies = [
+ "ark-bn254",
+ "ark-ec",
+ "ark-ed-on-bn254",
+ "ark-ff",
+ "ark-poly",
+ "ark-serialize",
+ "ark-std",
+ "bincode",
+ "hex",
+ "itertools",
+ "lazy_static",
+ "num-bigint",
+ "num-integer",
+ "rand_chacha",
+ "serde",
+ "sha3",
+]
+
+[[package]]
+name = "zplonk"
+version = "0.1.0"
 source = "git+https://github.com/zypher-game/uzkge?branch=test#14833b5575d739890f1b2a701b5f077c0d9c19c0"
 dependencies = [
  "ark-bn254",
@@ -908,5 +930,5 @@ dependencies = [
  "bincode",
  "rand_chacha",
  "serde",
- "zplonk",
+ "zplonk 0.1.0 (git+https://github.com/zypher-game/uzkge?branch=test)",
 ]

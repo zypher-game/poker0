@@ -1,18 +1,17 @@
-use ark_bn254::Fr;
-use ark_ec::CurveGroup;
-use poker_core::schnorr::PublicKey;
-use rand_chacha::rand_core::{CryptoRng, RngCore};
-use zplonk::{
+use crate::{
     anemoi::AnemoiJive254,
     errors::Result,
-    gen_params::{ProverParams, VerifierParams},
-    poly_commit::kzg_poly_commitment::KZGCommitmentSchemeBN254,
+    gen_params::params::{ProverParams, VerifierParams},
+    poly_commit::{kzg_poly_commitment::KZGCommitmentSchemeBN254, transcript::Transcript},
     turboplonk::{
         constraint_system::turbo::TurboCS, indexer::PlonkProof, prover::prover_with_lagrange,
         verifier::verifier,
     },
-    utils::transcript::Transcript,
 };
+use ark_bn254::Fr;
+use ark_ec::CurveGroup;
+use poker_core::schnorr::PublicKey;
+use rand_chacha::rand_core::{CryptoRng, RngCore};
 
 use crate::{public_keys::PublicKeyOutsource, reveals::RevealOutsource, unmask::UnmaskOutsource};
 
@@ -23,7 +22,7 @@ const PLONK_PROOF_TRANSCRIPT: &[u8] = b"Plonk poker Proof";
 pub const N_CARDS: usize = 52;
 pub const N_PLAYS: usize = 3;
 
-pub(crate) fn build_cs(
+pub fn build_cs(
     public_keys: &[PublicKey],
     reveal_outsources: &[RevealOutsource],
     unmask_outsources: &[UnmaskOutsource],
@@ -80,7 +79,8 @@ pub fn prove_outsource<R: CryptoRng + RngCore>(
         &cs,
         &prover_params.prover_params,
         &witness,
-    )?;
+    )
+    .unwrap();
 
     Ok(proof)
 }
@@ -122,15 +122,13 @@ pub fn verify_outsource(
         &verifier_params.verifier_params,
         &online_inputs,
         proof,
-    )?)
+    )
+    .unwrap())
 }
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        reveals::RevealOutsource,
-        unmask::UnmaskOutsource,
-    };
+    use crate::{reveals::RevealOutsource, unmask::UnmaskOutsource};
     use ark_ec::CurveGroup;
     use poker_core::{mock_data::task::mock_task, play::PlayAction};
 

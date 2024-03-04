@@ -1,5 +1,5 @@
+use crate::turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS};
 use ark_bn254::Fr;
-use zplonk::turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS};
 
 use poker_core::schnorr::PublicKey;
 
@@ -32,9 +32,9 @@ impl PublicKeyOutsource {
 #[cfg(test)]
 mod test {
     use crate::public_keys::PublicKeyOutsource;
+    use crate::turboplonk::constraint_system::turbo::TurboCS;
     use ark_bn254::Fr;
     use poker_core::mock_data::task::mock_task;
-    use zplonk::turboplonk::constraint_system::turbo::TurboCS;
 
     #[test]
     fn test_reveals_constraint_system() {

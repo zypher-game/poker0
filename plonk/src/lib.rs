@@ -9,6 +9,21 @@ pub mod reveals;
 pub mod signatures;
 pub mod unmask;
 
+/// Module for TurboPlonK.
+pub mod turboplonk;
+
+/// Module for polynomial commitment.
+pub mod poly_commit;
+
+/// Module for primitives and functions.
+pub mod utils;
+
+/// Module for anemoi hash.
+pub mod anemoi;
+
+/// Module for error handling.
+pub mod errors;
+
 #[cfg(test)]
 pub mod test;
 

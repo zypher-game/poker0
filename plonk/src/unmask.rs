@@ -1,8 +1,8 @@
+use crate::turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS};
 use ark_bn254::Fr;
 use ark_ed_on_bn254::EdwardsProjective;
 use poker_core::cards::{CryptoCard, RevealCard};
 use std::ops::Neg;
-use zplonk::turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS};
 
 #[derive(Default, Clone)]
 pub struct UnmaskOutsource {
@@ -82,12 +82,12 @@ impl UnmaskOutsource {
 
 #[cfg(test)]
 mod test {
+    use crate::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
     use crate::{
         public_keys::PublicKeyOutsource, reveals::RevealOutsource, unmask::UnmaskOutsource,
     };
     use ark_bn254::Fr;
     use poker_core::mock_data::task::mock_task;
-    use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
 
     #[test]
     fn test_unmask_constraint_system() {
