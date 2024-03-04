@@ -233,9 +233,8 @@ pub fn indexer_with_lagrange<PCS: PolyComScheme, CS: ConstraintSystem<PCS::Field
     };
 
     // Step 1: compute permutation polynomials and commit them.
-    let raw_perm = if let Some(x) = permutation {
-        println!("----perm----");
-        x
+    let raw_perm = if let Some(perm) = permutation {
+        perm
     } else {
         cs.compute_permutation()
     };
@@ -252,20 +251,14 @@ pub fn indexer_with_lagrange<PCS: PolyComScheme, CS: ConstraintSystem<PCS::Field
     let mut s_polys = vec![];
     let mut cm_s_vec = vec![];
     for i in 0..n_wires_per_gate {
-        let start = std::time::Instant::now();
         let s_coefs = FpPolynomial::ifft_with_domain(&domain, &encoded_perm[i * n..(i + 1) * n]);
-        println!("ifft_with_domain time: {:.2?}", start.elapsed());
 
-        let start = std::time::Instant::now();
         s_coset_evals[i].extend(s_coefs.coset_fft_with_domain(&domain_m, &k[1]));
-        println!("coset_fft_with_domain time: {:.2?}", start.elapsed());
 
-        let start = std::time::Instant::now();
         if no_verifier {
             let cm_s = commit(encoded_perm[i * n..(i + 1) * n].to_vec(), &s_coefs)?;
             cm_s_vec.push(cm_s);
-        }
-        println!("commit time: {:.2?}", start.elapsed());
+        };
 
         s_polys.push(s_coefs);
     }

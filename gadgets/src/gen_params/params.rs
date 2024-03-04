@@ -59,7 +59,7 @@ pub struct ProverParams {
 }
 
 impl ProverParams {
-    /// Obtain the parameters for 2048 game.
+    /// Obtain the parameters.
     pub fn gen() -> Result<ProverParams> {
         let task = mock_task();
 
@@ -110,18 +110,10 @@ impl ProverParams {
             None
         };
 
-        let start = std::time::Instant::now();
         let perm = load_permutation_params();
-        println!(
-            "load_permutation_params time: {:.2?}, {}",
-            start.elapsed(),
-            perm.is_some()
-        );
 
-        let start = std::time::Instant::now();
         let prover_params =
             indexer_with_lagrange(&cs, &pcs, lagrange_pcs.as_ref(), perm, verifier_params).unwrap();
-        println!("indexer_with_lagrange time: {:.2?}", start.elapsed());
 
         Ok(ProverParams {
             pcs,
@@ -133,7 +125,7 @@ impl ProverParams {
 }
 
 impl VerifierParams {
-    /// Load the verifier parameters.
+    /// Get the verifier parameters.
     pub fn get() -> Result<VerifierParams> {
         match Self::load() {
             Ok(vk) => Ok(vk),
@@ -204,6 +196,10 @@ pub fn load_permutation_params() -> Option<Vec<usize>> {
 }
 
 pub fn load_srs_params(size: usize) -> Result<KZGCommitmentSchemeBN254> {
+    if size != 1048576 {
+        return Err(PlonkError::ParameterError);
+    }
+
     let srs = SRS.ok_or(PlonkError::MissingSRSError)?;
 
     let KZGCommitmentSchemeBN254 {
@@ -215,29 +211,9 @@ pub fn load_srs_params(size: usize) -> Result<KZGCommitmentSchemeBN254> {
     let mut new_group_1 = vec![G1Projective::default(); core::cmp::max(size + 3, 2051)];
     new_group_1[0..2051].copy_from_slice(&public_parameter_group_1[0..2051]);
 
-    if size == 4096 {
-        new_group_1[4096..4099].copy_from_slice(&public_parameter_group_1[2051..2054]);
-    }
-
-    if size == 8192 {
-        new_group_1[8192..8195].copy_from_slice(&public_parameter_group_1[2054..2057]);
-    }
-
-    if size == 16384 {
-        new_group_1[16384..16387].copy_from_slice(&public_parameter_group_1[2057..2060]);
-    }
-
-    if size == 65536 {
-        new_group_1[65536..65539].copy_from_slice(&public_parameter_group_1[2063..2066]);
-    }
-
     if size == 1048576 {
         new_group_1[1048576..1048579].copy_from_slice(&public_parameter_group_1[2075..2078]);
     }
-
-    // if size > 16384 {
-    //     return Err(SetUpError::ParameterError);
-    // }
 
     Ok(KZGCommitmentSchemeBN254 {
         public_parameter_group_2,

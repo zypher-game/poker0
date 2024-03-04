@@ -8,7 +8,7 @@ use ark_std::rand::SeedableRng;
 use poker_core::{mock_data::task::mock_task, play::PlayAction};
 use rand_chacha::ChaChaRng;
 
-// cargo test --release --package gadgets --lib -- test::test_outsource --exact --nocapture 
+// cargo test --release --package gadgets --lib -- test::test_outsource --exact --nocapture
 #[test]
 fn test_outsource() {
     let mut rng = ChaChaRng::from_seed([0u8; 32]);

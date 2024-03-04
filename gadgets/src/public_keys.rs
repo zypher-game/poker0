@@ -1,6 +1,5 @@
 use ark_bn254::Fr;
 use plonk::turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS};
-
 use poker_core::schnorr::PublicKey;
 
 pub struct PublicKeyOutsource {

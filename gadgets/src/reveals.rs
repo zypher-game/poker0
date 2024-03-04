@@ -1,7 +1,7 @@
 use std::ops::Mul;
 
 use ark_bn254::Fr;
-use ark_ec::{CurveGroup, PrimeGroup, AdditiveGroup};
+use ark_ec::{AdditiveGroup, CurveGroup, PrimeGroup};
 use ark_ed_on_bn254::EdwardsProjective;
 use ark_ff::{BigInteger, Field, PrimeField};
 use num_bigint::BigUint;

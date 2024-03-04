@@ -22,14 +22,14 @@ use super::{
 /// commitment scheme `pcs` do not match the constraint system parameters.
 /// # Example
 /// ```
-/// use game_2048::turboplonk::{
+/// use plonk::turboplonk::{
 ///     constraint_system::TurboCS,
 ///     verifier::verifier,
 ///     prover::prover,
 ///     indexer::indexer
 /// };
-/// use game_2048::poly_commit::kzg_poly_commitment::KZGCommitmentScheme;
-/// use game_2048::poly_commit::transcript::Transcript;
+/// use plonk::poly_commit::kzg_poly_commitment::KZGCommitmentScheme;
+/// use plonk::poly_commit::transcript::Transcript;
 /// use rand_chacha::ChaChaRng;
 /// use ark_bn254::Fr;
 /// use ark_std::{One, rand::SeedableRng, ops::*};
@@ -183,7 +183,6 @@ pub fn prover_with_lagrange<
     // 3. build the z polynomial, hide it and commit
 
     let (cm_z, z_poly) = if let Some(lagrange_pcs) = lagrange_pcs {
-        println!("------lagrange_pcs------");
         let z_evals = z_poly::<PCS, CS>(prover_params, &extended_witness, &challenges);
         let mut z_coefs = FpPolynomial::ifft_with_domain(&domain, &z_evals.coefs);
         let blinds = hide_polynomial(prng, &mut z_coefs, 3, n_constraints);

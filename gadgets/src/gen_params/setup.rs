@@ -3,13 +3,15 @@
 #![cfg_attr(any(feature = "no_srs", feature = "no_vk"), allow(unused))]
 
 use ark_bn254::G1Projective;
-use plonk::{
+use gadgets::{
     build_cs::{build_cs, N_CARDS, N_PLAYS},
     gen_params::{params::VerifierParams, SRS},
-    poly_commit::kzg_poly_commitment::KZGCommitmentSchemeBN254,
     reveals::RevealOutsource,
-    turboplonk::constraint_system::ConstraintSystem,
     unmask::UnmaskOutsource,
+};
+use plonk::{
+    poly_commit::kzg_poly_commitment::KZGCommitmentSchemeBN254,
+    turboplonk::constraint_system::ConstraintSystem,
 };
 use poker_core::{mock_data::task::mock_task, play::PlayAction};
 use std::path::PathBuf;
@@ -157,6 +159,7 @@ fn cut_srs(mut path: PathBuf) {
 
 // cargo run --release --features="gen no_vk" --bin gen-params all "./parameters"
 fn gen_all(directory: PathBuf) {
+    gen_premutation(directory.clone());
     gen_vk(directory.clone());
     cut_srs(directory)
 }

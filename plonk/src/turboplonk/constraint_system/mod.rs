@@ -62,9 +62,6 @@ pub trait ConstraintSystem<F: PrimeField>: Sized {
         // marked variables already processd
         // for each unmarked variable, find all position where this variable occurs to form a cycle.
         for (i, value) in v.iter().enumerate() {
-            if i % 10000 == 0 {
-                println!("---i---:{}", i);
-            }
             if marked[*value] {
                 continue;
             }

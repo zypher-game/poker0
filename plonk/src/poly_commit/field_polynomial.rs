@@ -28,7 +28,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// Return the constant zero polynomial
     /// # Example
     /// ```
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     /// let poly = FpPolynomial::<Fr>::zero();
@@ -44,7 +44,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// Return the constant one polynomial
     /// # Example
     /// ```
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     /// let poly = FpPolynomial::<Fr>::one();
@@ -62,7 +62,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// # Example
     /// ```
     /// use ark_std::ops::Add;
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -91,7 +91,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// # Example
     /// ```
     /// use ark_std::ops::Add;
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -129,7 +129,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// coffiecient with probability 1/q is zero, and hence the degree could be less than `degree`
     /// # Example:
     /// ```
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::UniformRand;
     /// use ark_std::rand::SeedableRng;
@@ -159,7 +159,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// Return degree of the polynomial
     /// # Example:
     /// ```
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -179,7 +179,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// Test if polynomial is the zero polynomial.
     /// # Example:
     /// ```
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -224,7 +224,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// # Example:
     /// ```
     /// use ark_std::ops::Add;
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -251,7 +251,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// ```
     /// use ark_std::ops::Neg;
     /// use ark_std::ops::Add;
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -295,7 +295,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// # Example:
     /// ```
     /// use ark_std::ops::Add;
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -319,7 +319,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// # Example:
     /// ```
     /// use ark_std::ops::Neg;
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -340,7 +340,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// # Example:
     /// ```
     /// use ark_std::ops::Neg;
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -363,7 +363,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// ```
     /// use ark_std::ops::Neg;
     /// use ark_std::ops::AddAssign;
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -394,7 +394,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// # Example:
     /// ```
     /// use ark_std::ops::Add;
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -429,7 +429,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// # Example:
     /// ```
     /// use ark_std::ops::Add;
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -452,7 +452,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// # Example:
     /// ```
     /// use ark_std::ops::Add;
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -478,7 +478,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// # Example:
     /// ```
     /// use ark_std::ops::Add;
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
@@ -500,7 +500,7 @@ impl<F: PrimeField> FpPolynomial<F> {
     /// Divide polynomial to produce the quotient and remainder polynomials.
     /// # Example:
     /// ```
-    /// use game_2048::poly_commit::field_polynomial::FpPolynomial;
+    /// use plonk::poly_commit::field_polynomial::FpPolynomial;
     /// use ark_bn254::Fr;
     /// use ark_ff::{Zero, One, Field, AdditiveGroup};
     ///
