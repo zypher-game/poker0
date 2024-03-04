@@ -1,8 +1,8 @@
-pub type Result<T> = core::result::Result<T, ZplonkError>;
+pub type Result<T> = core::result::Result<T, PlonkError>;
 
-/// zplonk errors.
+/// Plonk errors.
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub enum ZplonkError {
+pub enum PlonkError {
     /// Common: Could not serialize object.
     SerializationError,
     /// Common: Could not deserialize object.
@@ -43,13 +43,13 @@ pub enum ZplonkError {
     Message(String),
 }
 
-impl core::fmt::Display for ZplonkError {
+impl core::fmt::Display for PlonkError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 
-impl ark_std::error::Error for ZplonkError {
+impl ark_std::error::Error for PlonkError {
     #[cfg(feature = "std")]
     fn description(&self) -> &str {
         Box::leak(format!("{}", self).into_boxed_str())

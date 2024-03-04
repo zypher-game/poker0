@@ -4,7 +4,7 @@
 
 use ark_bn254::G1Projective;
 use poker_core::{mock_data::task::mock_task, play::PlayAction};
-use poker_plonk::{
+use plonk::{
     build_cs::{build_cs, N_CARDS, N_PLAYS},
     gen_params::{params::VerifierParams, SRS},
     poly_commit::kzg_poly_commitment::KZGCommitmentSchemeBN254,

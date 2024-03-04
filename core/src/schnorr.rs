@@ -7,7 +7,7 @@ use ark_ff::{BigInteger, PrimeField};
 use ark_std::UniformRand;
 use rand_chacha::rand_core::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
-use zplonk::{
+use plonk::{
     anemoi::{AnemoiJive, AnemoiJive254},
     utils::serialization::{ark_deserialize, ark_serialize},
 };

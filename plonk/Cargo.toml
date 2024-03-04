@@ -1,5 +1,5 @@
 [package]
-name = "poker-plonk"
+name = "plonk"
 version = "0.1.0"
 edition = "2021"
 
@@ -12,7 +12,6 @@ required-features = ["gen"]
 
 [dependencies]
 poker-core = { workspace = true }
-zplonk = { workspace = true }
 zshuffle = { workspace = true }
 num-bigint = "0.4.3"
 num-integer = "0.1.45"
@@ -71,3 +70,5 @@ parallel = [
   "ark-poly/parallel",
 ]
 gen = ["parallel", "structopt"]
+serialize0 = []
+deserialize0 = []
