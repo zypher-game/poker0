@@ -1,19 +1,23 @@
-use crate::{
+use ark_bn254::Fr;
+use ark_ec::CurveGroup;
+use plonk::{
     anemoi::AnemoiJive254,
     errors::Result,
-    gen_params::params::{ProverParams, VerifierParams},
     poly_commit::{kzg_poly_commitment::KZGCommitmentSchemeBN254, transcript::Transcript},
     turboplonk::{
         constraint_system::turbo::TurboCS, indexer::PlonkProof, prover::prover_with_lagrange,
         verifier::verifier,
     },
 };
-use ark_bn254::Fr;
-use ark_ec::CurveGroup;
 use poker_core::schnorr::PublicKey;
 use rand_chacha::rand_core::{CryptoRng, RngCore};
 
-use crate::{public_keys::PublicKeyOutsource, reveals::RevealOutsource, unmask::UnmaskOutsource};
+use crate::{
+    gen_params::params::{ProverParams, VerifierParams},
+    public_keys::PublicKeyOutsource,
+    reveals::RevealOutsource,
+    unmask::UnmaskOutsource,
+};
 
 pub type Proof = PlonkProof<KZGCommitmentSchemeBN254>;
 

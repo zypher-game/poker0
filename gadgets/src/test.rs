@@ -1,16 +1,14 @@
-use crate::poly_commit::{field_polynomial::FpPolynomial};
 use crate::{
     build_cs::{prove_outsource, verify_outsource, N_CARDS, N_PLAYS},
     gen_params::params::{ProverParams, VerifierParams},
     reveals::RevealOutsource,
     unmask::UnmaskOutsource,
 };
-use ark_bn254::Fr;
 use ark_std::rand::SeedableRng;
-use ark_std::UniformRand;
 use poker_core::{mock_data::task::mock_task, play::PlayAction};
 use rand_chacha::ChaChaRng;
 
+// cargo test --release --package gadgets --lib -- test::test_outsource --exact --nocapture 
 #[test]
 fn test_outsource() {
     let mut rng = ChaChaRng::from_seed([0u8; 32]);
@@ -79,37 +77,4 @@ fn test_outsource() {
         &proof,
     )
     .unwrap();
-}
-
-#[test]
-fn test_1() {
-    let size = 1048576;
-    let mut rng = ChaChaRng::from_seed([0u8; 32]);
-
-    // let srs = load_lagrange_params(size).unwrap();
-
-    let domain = FpPolynomial::<Fr>::evaluation_domain(size).unwrap();
-
-    let mut values = vec![];
-    for _ in 0..size {
-        values.push(Fr::rand(&mut rng))
-    }
-
-    if cfg!(feature = "parallel") {
-        println!("----------");
-    }
-
-    let start = std::time::Instant::now();
-    let coefs = FpPolynomial::ifft_with_domain(&domain, &values);
-    println!("ifft time: {:.2?}", start.elapsed());
-
-    let start = std::time::Instant::now();
-    let v = coefs.fft_with_domain(&domain);
-    println!("ifft time: {:.2?}", start.elapsed());
-
-    assert_eq!(v, values);
-
-    // let start = std::time::Instant::now();
-    // srs.commit(&coefs).unwrap();
-    // println!("ifft time: {:.2?}", start.elapsed());
 }

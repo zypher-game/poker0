@@ -2,9 +2,9 @@ use hashbrown::HashMap;
 
 use ark_ed_on_bn254::EdwardsAffine;
 use ark_ff::MontFp;
+use plonk::utils::serialization::{ark_deserialize, ark_serialize};
 use rand_chacha::rand_core::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
-use plonk::utils::serialization::{ark_deserialize, ark_serialize};
 
 use crate::CiphertextAffineRepr;
 

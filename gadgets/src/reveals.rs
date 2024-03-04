@@ -1,16 +1,15 @@
 use std::ops::Mul;
 
-use crate::{
-    anemoi::{AnemoiJive, AnemoiJive254},
-    turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS},
-};
 use ark_bn254::Fr;
-use ark_ec::AdditiveGroup;
-use ark_ec::{CurveGroup, PrimeGroup};
+use ark_ec::{CurveGroup, PrimeGroup, AdditiveGroup};
 use ark_ed_on_bn254::EdwardsProjective;
 use ark_ff::{BigInteger, Field, PrimeField};
 use num_bigint::BigUint;
 use num_integer::Integer;
+use plonk::{
+    anemoi::{AnemoiJive, AnemoiJive254},
+    turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS},
+};
 use poker_core::cards::{CryptoCard, RevealCard};
 use zshuffle::RevealProof;
 
@@ -184,8 +183,8 @@ impl RevealOutsource {
 mod test {
     use super::RevealOutsource;
     use crate::public_keys::PublicKeyOutsource;
-    use crate::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
     use ark_bn254::Fr;
+    use plonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
     use poker_core::mock_data::task::mock_task;
 
     #[test]

@@ -5,12 +5,12 @@ use ark_ec::{AffineRepr, CurveGroup};
 use ark_ed_on_bn254::EdwardsAffine;
 use ark_ff::{BigInteger, PrimeField};
 use ark_std::UniformRand;
-use rand_chacha::rand_core::{CryptoRng, RngCore};
-use serde::{Deserialize, Serialize};
 use plonk::{
     anemoi::{AnemoiJive, AnemoiJive254},
     utils::serialization::{ark_deserialize, ark_serialize},
 };
+use rand_chacha::rand_core::{CryptoRng, RngCore};
+use serde::{Deserialize, Serialize};
 
 /// The public key.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]

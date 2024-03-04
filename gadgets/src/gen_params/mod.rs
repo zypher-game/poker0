@@ -2,7 +2,6 @@ use ark_std::collections::BTreeMap;
 
 use lazy_static::lazy_static;
 
-pub mod errors;
 pub mod params;
 
 #[cfg(not(feature = "no_vk"))]

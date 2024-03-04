@@ -3,7 +3,6 @@
 #![cfg_attr(any(feature = "no_srs", feature = "no_vk"), allow(unused))]
 
 use ark_bn254::G1Projective;
-use poker_core::{mock_data::task::mock_task, play::PlayAction};
 use plonk::{
     build_cs::{build_cs, N_CARDS, N_PLAYS},
     gen_params::{params::VerifierParams, SRS},
@@ -12,6 +11,7 @@ use plonk::{
     turboplonk::constraint_system::ConstraintSystem,
     unmask::UnmaskOutsource,
 };
+use poker_core::{mock_data::task::mock_task, play::PlayAction};
 use std::path::PathBuf;
 use structopt::StructOpt;
 

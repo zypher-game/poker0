@@ -1,24 +1,22 @@
-use crate::build_cs::{N_CARDS, N_PLAYS};
-use crate::gen_params::errors::Result;
-use crate::poly_commit::pcs::PolyComScheme;
-use crate::reveals::RevealOutsource;
-use crate::unmask::UnmaskOutsource;
-use crate::{build_cs::build_cs, gen_params::VERIFIER_SPECIFIC_PARAMS};
 use crate::{
-    poly_commit::kzg_poly_commitment::KZGCommitmentSchemeBN254,
+    build_cs::{build_cs, N_CARDS, N_PLAYS},
+    gen_params::VERIFIER_SPECIFIC_PARAMS,
+    reveals::RevealOutsource,
+    unmask::UnmaskOutsource,
+};
+use ark_bn254::{Fr, G1Projective};
+use plonk::{
+    errors::{PlonkError, Result},
+    poly_commit::{kzg_poly_commitment::KZGCommitmentSchemeBN254, pcs::PolyComScheme},
     turboplonk::{
         constraint_system::{turbo::TurboCS, ConstraintSystem},
         indexer::{indexer_with_lagrange, PlonkProverParams, PlonkVerifierParams},
     },
 };
-use ark_bn254::{Fr, G1Projective};
-use poker_core::mock_data::task::mock_task;
-use poker_core::play::PlayAction;
+use poker_core::{mock_data::task::mock_task, play::PlayAction};
 use serde::{Deserialize, Serialize};
 
-use super::errors::SetUpError;
-use super::{LAGRANGE_BASES, SRS};
-use super::{PERMUTATION, VERIFIER_COMMON_PARAMS};
+use super::{LAGRANGE_BASES, PERMUTATION, SRS, VERIFIER_COMMON_PARAMS};
 
 #[derive(Serialize, Deserialize)]
 /// The verifier parameters.
@@ -148,10 +146,10 @@ impl VerifierParams {
         match (VERIFIER_COMMON_PARAMS, VERIFIER_SPECIFIC_PARAMS) {
             (Some(c_bytes), Some(s_bytes)) => {
                 let common: VerifierParamsSplitCommon =
-                    bincode::deserialize(c_bytes).map_err(|_| SetUpError::DeserializationError)?;
+                    bincode::deserialize(c_bytes).map_err(|_| PlonkError::DeserializationError)?;
 
                 let special: VerifierParamsSplitSpecific =
-                    bincode::deserialize(s_bytes).map_err(|_| SetUpError::DeserializationError)?;
+                    bincode::deserialize(s_bytes).map_err(|_| PlonkError::DeserializationError)?;
 
                 Ok(VerifierParams {
                     shrunk_vk: common.shrunk_pcs,
@@ -159,7 +157,7 @@ impl VerifierParams {
                     verifier_params: special.verifier_params,
                 })
             }
-            _ => Err(SetUpError::MissingVerifierParamsError),
+            _ => Err(PlonkError::MissingVerifierParamsError),
         }
     }
 
@@ -206,13 +204,13 @@ pub fn load_permutation_params() -> Option<Vec<usize>> {
 }
 
 pub fn load_srs_params(size: usize) -> Result<KZGCommitmentSchemeBN254> {
-    let srs = SRS.ok_or(SetUpError::MissingSRSError)?;
+    let srs = SRS.ok_or(PlonkError::MissingSRSError)?;
 
     let KZGCommitmentSchemeBN254 {
         public_parameter_group_1,
         public_parameter_group_2,
     } = KZGCommitmentSchemeBN254::from_unchecked_bytes(&srs)
-        .map_err(|_| SetUpError::DeserializationError)?;
+        .map_err(|_| PlonkError::DeserializationError)?;
 
     let mut new_group_1 = vec![G1Projective::default(); core::cmp::max(size + 3, 2051)];
     new_group_1[0..2051].copy_from_slice(&public_parameter_group_1[0..2051]);
