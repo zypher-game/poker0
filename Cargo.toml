@@ -4,7 +4,9 @@ members = [
   "host",
   "methods",
   "bonsai", 
-  "plonk", "gadgets",
+  "plonk", 
+  "gadgets",
+  "wasm"
 ]
 resolver = "2"
 

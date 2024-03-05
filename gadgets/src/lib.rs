@@ -1,6 +1,7 @@
 use ark_bn254::Fr;
 use ark_ff::PrimeField;
 use num_bigint::BigUint;
+use poker_core::task::Task;
 
 pub mod build_cs;
 pub mod gen_params;
