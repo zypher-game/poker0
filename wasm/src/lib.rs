@@ -103,11 +103,11 @@ pub fn create_play_env(player_env: JsValue) -> Result<String, JsValue> {
             .action(PlayAction::PLAY)
             .build_and_sign(&key_pair, &mut prng)
             .map_err(error_to_jsvalue)?,
-            
+
         _ => return Err(error_to_jsvalue("Incorrect play action")),
     };
 
     let res = serde_json::to_string(&env_with_sign).map_err(error_to_jsvalue)?;
-    
+
     Ok(res)
 }

@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct PrivateKey(
     #[serde(serialize_with = "ark_serialize", deserialize_with = "ark_deserialize")]
-   pub ark_ed_on_bn254::Fr,
+    pub  ark_ed_on_bn254::Fr,
 );
 
 /// The private key.

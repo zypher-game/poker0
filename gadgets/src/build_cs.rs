@@ -132,50 +132,20 @@ pub fn verify_outsource(
 
 #[cfg(test)]
 mod test {
-    use crate::{reveals::RevealOutsource, unmask::UnmaskOutsource};
+    use crate::create_outsource;
     use ark_ec::CurveGroup;
-    use poker_core::{mock_data::task::mock_task, play::PlayAction};
+    use poker_core::mock_data::task::mock_task;
 
     use super::build_cs;
 
     #[test]
     fn test_build_cs() {
-        let task = mock_task();
+        let (public_keys, reveal_outsources, unmask_outsources) = create_outsource(&mock_task());
 
-        let mut reveal_outsources = vec![];
-        let mut unmask_outsources = vec![];
-
-        for plays in task.players_env.iter() {
-            for env in plays.iter() {
-                if let PlayAction::PLAY = env.action {
-                    let crypto_cards = env.play_cards.clone().unwrap().to_vec();
-
-                    for (crypto_card, reveal) in crypto_cards.iter().zip(env.reveals.iter()) {
-                        let reveal_cards = reveal.iter().map(|x| x.0).collect::<Vec<_>>();
-                        let proofs = reveal.iter().map(|x| x.1).collect::<Vec<_>>();
-                        let reveal_outsource =
-                            RevealOutsource::new(crypto_card, &reveal_cards, &proofs);
-                        reveal_outsources.push(reveal_outsource);
-
-                        let reveal_cards_projective =
-                            reveal_cards.iter().map(|x| x.0.into()).collect::<Vec<_>>();
-                        let unmasked_card = zshuffle::reveal::unmask(
-                            &crypto_card.0.to_ciphertext(),
-                            &reveal_cards_projective,
-                        )
-                        .unwrap();
-                        let unmask_outsource =
-                            UnmaskOutsource::new(crypto_card, &reveal_cards, &unmasked_card);
-                        unmask_outsources.push(unmask_outsource);
-                    }
-                }
-            }
-        }
-
-        let mut cs = build_cs(&task.players_keys, &reveal_outsources, &unmask_outsources);
+        let mut cs = build_cs(&public_keys, &reveal_outsources, &unmask_outsources);
 
         let mut online_inputs = vec![];
-        for pk in task.players_keys.iter() {
+        for pk in public_keys.iter() {
             online_inputs.push(pk.0.x);
             online_inputs.push(pk.0.y);
         }

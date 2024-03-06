@@ -1,6 +1,8 @@
 use ark_std::collections::BTreeMap;
 use lazy_static::lazy_static;
 
+use crate::gen_params::params::ProverParams;
+
 pub mod params;
 
 #[cfg(not(feature = "no_vk"))]
@@ -58,5 +60,9 @@ lazy_static! {
         }
 
         m
+    };
+
+    pub static ref PROVER_PARAMS: ProverParams = {
+        ProverParams::gen().unwrap()
     };
 }
