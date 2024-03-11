@@ -18,6 +18,15 @@ pub enum Suite {
 
 impl Suite {
     pub const SUITES: [Suite; 4] = [Suite::Club, Suite::Diamond, Suite::Heart, Suite::Spade];
+
+    pub fn to_u8(&self) -> u8 {
+        match self {
+            Suite::Club => 0,
+            Suite::Diamond => 1,
+            Suite::Heart => 2,
+            Suite::Spade => 3,
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -71,6 +80,24 @@ impl Value {
             Value::Two => 15,
         }
     }
+
+    pub fn to_u8(&self) -> u8 {
+        match self {
+            Value::Ace => 1,
+            Value::Two => 2,
+            Value::Three => 3,
+            Value::Four => 4,
+            Value::Five => 5,
+            Value::Six => 6,
+            Value::Seven => 7,
+            Value::Eight => 8,
+            Value::Nine => 9,
+            Value::Ten => 10,
+            Value::Jack => 11,
+            Value::Queen => 12,
+            Value::King => 13,
+        }
+    }
 }
 
 impl PartialOrd for Value {
@@ -96,6 +123,10 @@ impl ClassicCard {
 
     pub fn weight(&self) -> u8 {
         self.value.weight()
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        vec![self.value.to_u8(), self.suite.to_u8()]
     }
 }
 

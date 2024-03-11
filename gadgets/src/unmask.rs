@@ -93,7 +93,7 @@ mod test {
     fn test_unmask_constraint_system() {
         let task = mock_task();
         let env = &task.players_env[0][0];
-        let card = env.play_cards.clone().unwrap().to_vec()[0];
+        let card = env.play_crypto_cards.clone().unwrap().to_vec()[0];
         let reveals = &env.reveals[0];
 
         let reveal_cards = reveals.iter().map(|x| x.0).collect::<Vec<_>>();

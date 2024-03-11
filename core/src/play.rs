@@ -1,6 +1,6 @@
 use crate::{
     cards::{EncodingCard, RevealCard},
-    combination::{CryptoCardCombination, EncodingCardCombination},
+    combination::{ClassicCardCombination, CryptoCardCombination, EncodingCardCombination},
     errors::{PokerError, Result},
     schnorr::{KeyPair, PublicKey, Signature},
 };
@@ -39,7 +39,8 @@ pub struct PlayerEnv {
     // The identifier for the current turn within the round.
     pub turn_id: u8,
     pub action: PlayAction,
-    pub play_cards: Option<CryptoCardCombination>,
+    pub play_crypto_cards: Option<CryptoCardCombination>,
+    pub play_classic_cards: Option<ClassicCardCombination>,
     // Note! The order of revealing is based on the order of the players.
     pub reveals: Vec<Vec<(RevealCard, RevealProof, PublicKey)>>,
     // Currently using schnorr signatures, with plans to transition to aggregated signatures in the future.
@@ -63,7 +64,8 @@ impl Default for PlayerEnv {
             turn_id: 0,
             round_id: 0,
             action: PlayAction::PAAS,
-            play_cards: None,
+            play_classic_cards: None,
+            play_crypto_cards: None,
             reveals: vec![],
             signature: Signature::default(),
         }
@@ -96,7 +98,7 @@ impl PlayerEnv {
 
         let mut cards = {
             if self.action != PlayAction::PAAS {
-                self.play_cards.clone().unwrap().flatten()
+                self.play_crypto_cards.clone().unwrap().flatten()
             } else {
                 vec![]
             }
@@ -124,7 +126,7 @@ impl PlayerEnv {
 
         let mut cards = {
             if self.action != PlayAction::PAAS {
-                self.play_cards.clone().unwrap().flatten()
+                self.play_crypto_cards.clone().unwrap().flatten()
             } else {
                 vec![]
             }
@@ -138,7 +140,7 @@ impl PlayerEnv {
 
     pub fn verify_and_get_reveals(&self) -> Result<Vec<EncodingCard>> {
         let cards = self
-            .play_cards
+            .play_crypto_cards
             .clone()
             .ok_or(PokerError::NoCardError)?
             .to_vec();
@@ -172,7 +174,7 @@ impl PlayerEnv {
         let unmasked_cards = if self.action == PlayAction::PLAY {
             let unmasked_cards = self.verify_and_get_reveals().unwrap();
             let unmasked_cards = self
-                .play_cards
+                .play_crypto_cards
                 .as_ref()
                 .and_then(|x| Some(x.morph_to_encoding(&unmasked_cards)))
                 .unwrap();
@@ -187,7 +189,7 @@ impl PlayerEnv {
             round_id: self.round_id,
             turn_id: self.turn_id,
             action: self.action,
-            play_crypto_cards: self.play_cards.clone(),
+            play_crypto_cards: self.play_crypto_cards.clone(),
             play_unmasked_cards: unmasked_cards,
         }
     }
@@ -218,8 +220,8 @@ impl PlayerEnvBuilder {
         self
     }
 
-    pub fn play_cards(mut self, play_cards: Option<CryptoCardCombination>) -> Self {
-        self.inner.play_cards = play_cards;
+    pub fn play_cards(mut self, play_crypto_cards: Option<CryptoCardCombination>) -> Self {
+        self.inner.play_crypto_cards = play_crypto_cards;
         self
     }
 
@@ -231,14 +233,14 @@ impl PlayerEnvBuilder {
     pub fn validate_rules(&self) -> Result<()> {
         match self.inner.action {
             PlayAction::PAAS => {
-                if !self.inner.reveals.is_empty() || self.inner.play_cards.is_some() {
+                if !self.inner.reveals.is_empty() || self.inner.play_crypto_cards.is_some() {
                     Err(PokerError::BuildPlayEnvParamsError)
                 } else {
                     Ok(())
                 }
             }
             PlayAction::PLAY => {
-                if let Some(c) = &self.inner.play_cards {
+                if let Some(c) = &self.inner.play_crypto_cards {
                     // todo check  self.inner.others_reveal.len = participant
                     if self.inner.reveals.len() != c.len() {
                         Err(PokerError::BuildPlayEnvParamsError)
@@ -258,13 +260,22 @@ impl PlayerEnvBuilder {
         prng: &mut R,
     ) -> Result<PlayerEnv> {
         self.validate_rules()?;
-
         let pack = self.inner.pack();
         let mut msg = vec![Fr::from(pack)];
 
         let mut cards = {
             if self.inner.action != PlayAction::PAAS {
-                self.inner.play_cards.clone().unwrap().flatten()
+                let reveals = self.inner.verify_and_get_reveals().unwrap();
+                let encode_card = self
+                    .inner
+                    .play_crypto_cards
+                    .clone()
+                    .unwrap()
+                    .morph_to_encoding(&reveals);
+                let classic = encode_card.morph_to_classic().unwrap();
+                self.inner.play_classic_cards = Some(classic);
+
+                self.inner.play_crypto_cards.clone().unwrap().flatten()
             } else {
                 vec![]
             }

@@ -88,7 +88,7 @@ impl Task {
                     assert_eq!(player.action, PlayAction::PLAY);
                     let reveals = player.verify_and_get_reveals().unwrap();
                     let encoding = player
-                        .play_cards
+                        .play_crypto_cards
                         .as_ref()
                         .and_then(|x| Some(x.morph_to_encoding(&reveals)))
                         .unwrap();
@@ -96,7 +96,7 @@ impl Task {
                     let classic = encoding.morph_to_classic().unwrap();
                     assert!(classic.validate_rules());
 
-                    let play_cards = player.play_cards.clone().unwrap().to_vec();
+                    let play_cards = player.play_crypto_cards.clone().unwrap().to_vec();
                     crypto_cards.extend(play_cards.clone());
                     let hand = input_hand.get_mut(current).unwrap();
                     assert!(play_cards.iter().all(|x| hand.contains(x)));
@@ -112,7 +112,7 @@ impl Task {
                     if let PlayAction::PLAY = player.action {
                         let reveals = player.verify_and_get_reveals().unwrap();
                         let encoding = player
-                            .play_cards
+                            .play_crypto_cards
                             .as_ref()
                             .and_then(|x| Some(x.morph_to_encoding(&reveals)))
                             .unwrap();
@@ -121,7 +121,7 @@ impl Task {
                         assert!(classic.validate_rules());
                         assert!(classic > round_max_cards);
 
-                        let play_cards = player.play_cards.clone().unwrap().to_vec();
+                        let play_cards = player.play_crypto_cards.clone().unwrap().to_vec();
                         crypto_cards.extend(play_cards.clone());
                         let hand = input_hand.get_mut(current).unwrap();
                         assert!(play_cards.iter().all(|x| hand.contains(x)));

@@ -412,6 +412,115 @@ impl ClassicCardCombination {
             Rocket(_, _) => todo!(),
         }
     }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        match self {
+            Single(x) => x.to_bytes(),
+            Pair(x1, x2) => {
+                let mut bytes = x1.to_bytes();
+                bytes.extend(x2.to_bytes());
+                bytes
+            }
+            ThreeOfAKind(x1, x2, x3) => {
+                let mut bytes = x1.to_bytes();
+                bytes.extend(x2.to_bytes());
+                bytes.extend(x3.to_bytes());
+                bytes
+            }
+            ThreeWithOne(x1, x2, x3, x4) => {
+                let mut bytes = x1.to_bytes();
+                bytes.extend(x2.to_bytes());
+                bytes.extend(x3.to_bytes());
+                bytes.extend(x4.to_bytes());
+                bytes
+            }
+            ThreeWithPair(x1, x2, x3, x4, x5) => {
+                let mut bytes = x1.to_bytes();
+                bytes.extend(x2.to_bytes());
+                bytes.extend(x3.to_bytes());
+                bytes.extend(x4.to_bytes());
+                bytes.extend(x5.to_bytes());
+                bytes
+            }
+            Straight(x) => {
+                let mut bytes = vec![];
+                for y in x.iter() {
+                    bytes.extend(y.to_bytes());
+                }
+                bytes
+            }
+            DoubleStraight(x) => {
+                let mut bytes = vec![];
+                for y in x.iter() {
+                    bytes.extend(y.0.to_bytes());
+                    bytes.extend(y.1.to_bytes());
+                }
+                bytes
+            }
+            TripleStraight(x) => {
+                let mut bytes = vec![];
+                for y in x.iter() {
+                    bytes.extend(y.0.to_bytes());
+                    bytes.extend(y.1.to_bytes());
+                    bytes.extend(y.2.to_bytes());
+                }
+                bytes
+            }
+            TripleStraightWithOne(x) => {
+                let mut bytes = vec![];
+                for y in x.iter() {
+                    bytes.extend(y.0.to_bytes());
+                    bytes.extend(y.1.to_bytes());
+                    bytes.extend(y.2.to_bytes());
+                    bytes.extend(y.3.to_bytes());
+                }
+                bytes
+            }
+            TripleStraightWithPair(x) => {
+                let mut bytes = vec![];
+                for y in x.iter() {
+                    bytes.extend(y.0.to_bytes());
+                    bytes.extend(y.1.to_bytes());
+                    bytes.extend(y.2.to_bytes());
+                    bytes.extend(y.3.to_bytes());
+                    bytes.extend(y.4.to_bytes());
+                }
+                bytes
+            }
+            FourWithTwoSingle(x1, x2, x3, x4, x5, x6) => {
+                let mut bytes = x1.to_bytes();
+                bytes.extend(x2.to_bytes());
+                bytes.extend(x3.to_bytes());
+                bytes.extend(x4.to_bytes());
+                bytes.extend(x5.to_bytes());
+                bytes.extend(x6.to_bytes());
+                bytes
+            }
+            FourWithTwoPairs(x1, x2, x3, x4, x5, x6, x7, x8) => {
+                let mut bytes = x1.to_bytes();
+                bytes.extend(x2.to_bytes());
+                bytes.extend(x3.to_bytes());
+                bytes.extend(x4.to_bytes());
+                bytes.extend(x5.to_bytes());
+                bytes.extend(x6.to_bytes());
+                bytes.extend(x7.to_bytes());
+                bytes.extend(x8.to_bytes());
+                bytes
+            }
+            Bomb(x1, x2, x3, x4) => {
+                let mut bytes = x1.to_bytes();
+                bytes.extend(x2.to_bytes());
+                bytes.extend(x3.to_bytes());
+                bytes.extend(x4.to_bytes());
+                bytes
+            }
+            Rocket(x1, x2) => {
+                let mut bytes = x1.to_bytes();
+                bytes.extend(x2.to_bytes());
+                bytes
+            }
+        }
+    }
 }
 
 pub type EncodingCardCombination = Combination<EncodingCard>;

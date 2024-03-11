@@ -35,7 +35,7 @@ pub fn create_outsource(
     for plays in task.players_env.iter() {
         for env in plays.iter() {
             if let PlayAction::PLAY = env.action {
-                let crypto_cards = env.play_cards.clone().unwrap().to_vec();
+                let crypto_cards = env.play_crypto_cards.clone().unwrap().to_vec();
 
                 for (crypto_card, reveal) in crypto_cards.iter().zip(env.reveals.iter()) {
                     let reveal_cards = reveal.iter().map(|x| x.0).collect::<Vec<_>>();
