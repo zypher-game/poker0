@@ -170,7 +170,7 @@ impl PlayerEnv {
         Ok(unmasked_cards)
     }
 
-    pub fn convert_to_env0(&self) -> PlayerEnv0 {
+    pub fn convert0(&self) -> PlayerEnv0 {
         let unmasked_cards = if self.action == PlayAction::PLAY {
             let unmasked_cards = self.verify_and_get_reveals().unwrap();
             let unmasked_cards = self

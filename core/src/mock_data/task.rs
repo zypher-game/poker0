@@ -213,7 +213,7 @@ pub fn mock_task() -> Task {
     let bob_play_0_0 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(0)
-        .turn_id(0)
+        .turn_id(1)
         .action(PlayAction::PAAS)
         .build_and_sign(&bob, &mut rng)
         .unwrap();
@@ -221,7 +221,7 @@ pub fn mock_task() -> Task {
     let charlie_play_0_0 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(0)
-        .turn_id(0)
+        .turn_id(2)
         .action(PlayAction::PAAS)
         .build_and_sign(&charlie, &mut rng)
         .unwrap();
@@ -248,7 +248,7 @@ pub fn mock_task() -> Task {
     let bob_play_1_0 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(1)
-        .turn_id(0)
+        .turn_id(1)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
             CryptoCard(bob_deck[0].into()),
@@ -264,7 +264,7 @@ pub fn mock_task() -> Task {
     let charlie_play_1_0 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(1)
-        .turn_id(0)
+        .turn_id(2)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
             CryptoCard(charlie_deck[2].into()),
@@ -280,7 +280,7 @@ pub fn mock_task() -> Task {
     let alice_play_1_1 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(1)
-        .turn_id(1)
+        .turn_id(3)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
             CryptoCard(alice_deck[7].into()),
@@ -296,7 +296,7 @@ pub fn mock_task() -> Task {
     let bob_play_1_1 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(1)
-        .turn_id(1)
+        .turn_id(4)
         .action(PlayAction::PAAS)
         .build_and_sign(&bob, &mut rng)
         .unwrap();
@@ -304,7 +304,7 @@ pub fn mock_task() -> Task {
     let charlie_play_1_1 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(1)
-        .turn_id(1)
+        .turn_id(5)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
             CryptoCard(charlie_deck[5].into()),
@@ -320,7 +320,7 @@ pub fn mock_task() -> Task {
     let alice_play_1_2 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(1)
-        .turn_id(2)
+        .turn_id(6)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
             CryptoCard(alice_deck[5].into()),
@@ -336,7 +336,7 @@ pub fn mock_task() -> Task {
     let bob_play_1_2 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(1)
-        .turn_id(2)
+        .turn_id(7)
         .action(PlayAction::PAAS)
         .build_and_sign(&bob, &mut rng)
         .unwrap();
@@ -344,7 +344,7 @@ pub fn mock_task() -> Task {
     let charlie_play_1_2 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(1)
-        .turn_id(2)
+        .turn_id(8)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
             CryptoCard(charlie_deck[3].into()),
@@ -360,7 +360,7 @@ pub fn mock_task() -> Task {
     let alice_play_1_3 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(1)
-        .turn_id(3)
+        .turn_id(9)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
             CryptoCard(alice_deck[2].into()),
@@ -376,7 +376,7 @@ pub fn mock_task() -> Task {
     let bob_play_1_3 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(1)
-        .turn_id(3)
+        .turn_id(10)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Pair(
             CryptoCard(bob_deck[6].into()),
@@ -392,7 +392,7 @@ pub fn mock_task() -> Task {
     let charlie_play_1_3 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(1)
-        .turn_id(3)
+        .turn_id(11)
         .action(PlayAction::PAAS)
         .build_and_sign(&charlie, &mut rng)
         .unwrap();
@@ -400,7 +400,7 @@ pub fn mock_task() -> Task {
     let alice_play_1_4 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(1)
-        .turn_id(4)
+        .turn_id(12)
         .action(PlayAction::PAAS)
         .build_and_sign(&alice, &mut rng)
         .unwrap();
@@ -437,7 +437,7 @@ pub fn mock_task() -> Task {
     let charlie_play_2_0 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(2)
-        .turn_id(0)
+        .turn_id(1)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Single(CryptoCard(
             charlie_deck[15].into(),
@@ -449,7 +449,7 @@ pub fn mock_task() -> Task {
     let alice_play_2_0 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(2)
-        .turn_id(0)
+        .turn_id(2)
         .action(PlayAction::PAAS)
         .build_and_sign(&alice, &mut rng)
         .unwrap();
@@ -457,7 +457,7 @@ pub fn mock_task() -> Task {
     let bob_play_2_1 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(2)
-        .turn_id(1)
+        .turn_id(3)
         .action(PlayAction::PAAS)
         .build_and_sign(&bob, &mut rng)
         .unwrap();
@@ -490,7 +490,7 @@ pub fn mock_task() -> Task {
     let alice_play_3_0 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(3)
-        .turn_id(0)
+        .turn_id(1)
         .action(PlayAction::PAAS)
         .build_and_sign(&alice, &mut rng)
         .unwrap();
@@ -498,7 +498,7 @@ pub fn mock_task() -> Task {
     let bob_play_3_0 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(3)
-        .turn_id(0)
+        .turn_id(2)
         .action(PlayAction::PLAY)
         .play_cards(Some(CryptoCardCombination::Straight(vec![
             CryptoCard(bob_deck[5].into()),
@@ -520,7 +520,7 @@ pub fn mock_task() -> Task {
     let charlie_play_3_1 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(3)
-        .turn_id(1)
+        .turn_id(3)
         .action(PlayAction::PAAS)
         .build_and_sign(&charlie, &mut rng)
         .unwrap();
@@ -528,7 +528,7 @@ pub fn mock_task() -> Task {
     let alice_play_3_1 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(3)
-        .turn_id(1)
+        .turn_id(4)
         .action(PlayAction::PAAS)
         .build_and_sign(&alice, &mut rng)
         .unwrap();
@@ -569,7 +569,7 @@ pub fn mock_task() -> Task {
     let charlie_play_4_0 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(4)
-        .turn_id(0)
+        .turn_id(1)
         .action(PlayAction::PAAS)
         .build_and_sign(&charlie, &mut rng)
         .unwrap();
@@ -577,7 +577,7 @@ pub fn mock_task() -> Task {
     let alice_play_4_0 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(4)
-        .turn_id(0)
+        .turn_id(2)
         .action(PlayAction::PAAS)
         .build_and_sign(&alice, &mut rng)
         .unwrap();
@@ -601,7 +601,7 @@ pub fn mock_task() -> Task {
     let charlie_play_5_0 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(5)
-        .turn_id(0)
+        .turn_id(1)
         .action(PlayAction::PAAS)
         .build_and_sign(&charlie, &mut rng)
         .unwrap();
@@ -609,7 +609,7 @@ pub fn mock_task() -> Task {
     let alice_play_5_0 = PlayerEnvBuilder::new()
         .room_id(1)
         .round_id(5)
-        .turn_id(0)
+        .turn_id(2)
         .action(PlayAction::PAAS)
         .build_and_sign(&alice, &mut rng)
         .unwrap();

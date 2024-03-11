@@ -79,7 +79,7 @@ impl PokerHandler {
         };
 
         {
-            let task0 = task.convert_to_task0();
+            let task0 = task.convert0();
             let (receipt, session_id) = prove_bonsai(&task0).unwrap();
 
             let snark_proof = stark_to_snark(session_id).unwrap();

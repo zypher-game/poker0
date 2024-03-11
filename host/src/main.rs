@@ -22,7 +22,7 @@ pub fn prove_task(task: &Task0) {
 // RISC0_PPROF_OUT=./profile.pb cargo run --package poker-host --bin poker-host
 fn main() {
     let task = mock_task();
-    let task0 = task.convert_to_task0();
+    let task0 = task.convert0();
 
     prove_task(&task0);
 }

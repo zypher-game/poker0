@@ -31,11 +31,11 @@ pub struct Task0 {
 }
 
 impl Task {
-    pub fn convert_to_task0(&self) -> Task0 {
+    pub fn convert0(&self) -> Task0 {
         let players_env = self
             .players_env
             .iter()
-            .map(|x| x.iter().map(|y| y.convert_to_env0()).collect())
+            .map(|x| x.iter().map(|y| y.convert0()).collect())
             .collect();
 
         Task0 {
@@ -76,7 +76,7 @@ impl Task {
                 .all(|x| x.action == PlayAction::PAAS));
 
             for (i, player) in round_env.iter().enumerate() {
-                let turn_id = i / n;
+                let turn_id = i;
                 let current = (first_player_id + i) % n;
                 let pk = &players_keys[current];
 
