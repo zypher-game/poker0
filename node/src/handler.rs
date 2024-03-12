@@ -1,5 +1,5 @@
 use ark_ed_on_bn254::{EdwardsAffine, EdwardsProjective, Fr};
-use ark_ff::{BigInteger, One, PrimeField, UniformRand};
+use ark_ff::One;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, Validate};
 use poker_bonsai::{snark::stark_to_snark, stark::prove_bonsai};
 use poker_core::{
@@ -10,14 +10,14 @@ use poker_core::{
     CiphertextAffine,
 };
 use poker_gadgets::{
-    build_cs::{prove_outsource, verify_outsource, N_CARDS, N_PLAYS},
+    build_cs::{prove_outsource, N_CARDS, N_PLAYS},
     create_and_rescale_outsource,
     gen_params::PROVER_PARAMS,
 };
 use rand_chacha::{rand_core::SeedableRng, ChaChaRng};
 use std::collections::HashMap;
 use z4_engine::{
-    Address, DefaultParams, Error, HandleResult, Handler, PeerId, Result, RoomId, Task, Tasks,
+    Address, DefaultParams, Error, HandleResult, Handler, PeerId, Result, RoomId, Tasks,
 };
 use zshuffle::{
     build_cs::{prove_shuffle, verify_shuffle},
@@ -37,12 +37,6 @@ pub struct PokerHandler {
     // round_id => (turn_id => PlayerEnv)
     players_envs: HashMap<u8, HashMap<u8, PlayerEnv>>,
 }
-
-// todo
-// remove num_round in task
-// rename playaction in wasm
-// task's romm_id type
-// task turn_id order
 
 impl PokerHandler {
     fn prove(&self) {
@@ -72,7 +66,6 @@ impl PokerHandler {
 
         let task = CoreTask {
             room_id: self.room_id as usize,
-            num_round: 1, // todo
             players_keys,
             players_env,
             players_hand,
@@ -280,7 +273,7 @@ impl Handler for PokerHandler {
 
                 assert_eq!(play_env.action, PlayAction::PAAS);
 
-                process_pass_response(&mut results, pid);
+                process_pass_response(&mut results, player);
             }
 
             _ => unimplemented!(),

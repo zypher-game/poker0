@@ -101,6 +101,7 @@ impl Value {
 }
 
 impl PartialOrd for Value {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         self.weight().partial_cmp(&other.weight())
     }
@@ -117,14 +118,17 @@ impl ClassicCard {
         Self { value, suite }
     }
 
+    #[inline]
     pub fn get_value(&self) -> Value {
         self.value
     }
 
+    #[inline]
     pub fn weight(&self) -> u8 {
         self.value.weight()
     }
 
+    #[inline]
     pub fn to_bytes(&self) -> Vec<u8> {
         vec![self.value.to_u8(), self.suite.to_u8()]
     }

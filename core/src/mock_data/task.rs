@@ -598,29 +598,29 @@ pub fn mock_task() -> Task {
         .build_and_sign(&bob, &mut rng)
         .unwrap();
 
-    let charlie_play_5_0 = PlayerEnvBuilder::new()
-        .room_id(1)
-        .round_id(5)
-        .turn_id(1)
-        .action(PlayAction::PAAS)
-        .build_and_sign(&charlie, &mut rng)
-        .unwrap();
+    // let charlie_play_5_0 = PlayerEnvBuilder::new()
+    //     .room_id(1)
+    //     .round_id(5)
+    //     .turn_id(1)
+    //     .action(PlayAction::PAAS)
+    //     .build_and_sign(&charlie, &mut rng)
+    //     .unwrap();
 
-    let alice_play_5_0 = PlayerEnvBuilder::new()
-        .room_id(1)
-        .round_id(5)
-        .turn_id(2)
-        .action(PlayAction::PAAS)
-        .build_and_sign(&alice, &mut rng)
-        .unwrap();
+    // let alice_play_5_0 = PlayerEnvBuilder::new()
+    //     .room_id(1)
+    //     .round_id(5)
+    //     .turn_id(2)
+    //     .action(PlayAction::PAAS)
+    //     .build_and_sign(&alice, &mut rng)
+    //     .unwrap();
 
-    let round_5 = vec![bob_play_5_0, charlie_play_5_0, alice_play_5_0];
+    // let round_5 = vec![bob_play_5_0, charlie_play_5_0, alice_play_5_0];
+    let round_5 = vec![bob_play_5_0];
 
     let players_env = vec![round_0, round_1, round_2, round_3, round_4, round_5];
 
     Task {
         room_id: 1,
-        num_round: 6,
         players_keys,
         players_env,
         players_hand,

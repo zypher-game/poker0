@@ -1,4 +1,4 @@
-use z4_engine::Config;
+use z4_engine::{Config, Engine};
 
 mod handler;
 
@@ -31,4 +31,9 @@ async fn main() {
     config.games = vec![game.to_owned()];
     config.auto_stake = true;
     config.http = server;
+
+    Engine::<handler::PokerHandler>::init(config)
+        .run()
+        .await
+        .expect("Down");
 }

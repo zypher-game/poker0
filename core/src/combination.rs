@@ -1,10 +1,5 @@
 use crate::{
-    cards::{
-        ClassicCard, CryptoCard, EncodingCard,
-        Suite::Club,
-        Value::{self, Ace},
-        ENCODING_CARDS_MAPPING,
-    },
+    cards::{ClassicCard, CryptoCard, EncodingCard, Value, ENCODING_CARDS_MAPPING},
     combination::Combination::*,
     errors::{PokerError, Result},
 };
@@ -15,6 +10,9 @@ use serde::{Deserialize, Serialize};
 /// Different card play combinations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Combination<T> {
+    // Default
+    DefaultCombination,
+
     // Single card
     Single(T),
 
@@ -59,8 +57,10 @@ pub enum Combination<T> {
 }
 
 impl<T: Clone + Copy> Combination<T> {
+    #[inline]
     pub fn weight(&self) -> u8 {
         match self {
+            DefaultCombination => 0,
             Single(_) => 1,
             Pair(_, _) => 1,
             ThreeOfAKind(_, _, _) => 1,
@@ -78,8 +78,10 @@ impl<T: Clone + Copy> Combination<T> {
         }
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
         match self {
+            DefaultCombination => 0,
             Single(_) => 1,
             Pair(_, _) => 2,
             ThreeOfAKind(_, _, _) => 3,
@@ -97,8 +99,10 @@ impl<T: Clone + Copy> Combination<T> {
         }
     }
 
+    #[inline]
     pub fn to_vec(&self) -> Vec<T> {
         match self {
+            DefaultCombination => vec![],
             Single(x) => vec![*x],
             Pair(x1, x2) => vec![*x1, *x2],
             ThreeOfAKind(x1, x2, x3) => vec![*x1, *x2, *x3],
@@ -131,14 +135,17 @@ impl<T: Clone + Copy> Combination<T> {
 pub type ClassicCardCombination = Combination<ClassicCard>;
 
 impl Default for ClassicCardCombination {
+    #[inline]
     fn default() -> Self {
-        Self::Single(ClassicCard::new(Ace, Club))
+        Self::DefaultCombination
     }
 }
 
 impl PartialEq for ClassicCardCombination {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
+            (DefaultCombination, DefaultCombination) => true,
             (Single(x), Single(y)) => x.get_value().eq(&&y.get_value()),
 
             (Pair(x, _), Pair(y, _)) => x.get_value().eq(&y.get_value()),
@@ -217,6 +224,7 @@ impl PartialEq for ClassicCardCombination {
 }
 
 impl PartialOrd for ClassicCardCombination {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         if self.weight() == other.weight() {
             match (self, other) {
@@ -300,8 +308,11 @@ impl PartialOrd for ClassicCardCombination {
 }
 
 impl ClassicCardCombination {
+    #[inline]
     pub fn validate_rules(&self) -> bool {
         match self {
+            DefaultCombination => false,
+
             Single(_) => true,
 
             Pair(x1, x2) => x1.get_value() == x2.get_value(),
@@ -310,8 +321,10 @@ impl ClassicCardCombination {
                 x1.get_value() == x2.get_value() && x1.get_value() == x3.get_value()
             }
 
-            ThreeWithOne(x1, x2, x3, _) => {
-                x1.get_value() == x2.get_value() && x1.get_value() == x3.get_value()
+            ThreeWithOne(x1, x2, x3, x4) => {
+                x1.get_value() == x2.get_value()
+                    && x1.get_value() == x3.get_value()
+                    && x1.get_value() != x4.get_value()
             }
 
             ThreeWithPair(x1, x2, x3, y1, y2) => {
@@ -415,6 +428,7 @@ impl ClassicCardCombination {
 
     pub fn to_bytes(&self) -> Vec<u8> {
         match self {
+            DefaultCombination => vec![],
             Single(x) => x.to_bytes(),
             Pair(x1, x2) => {
                 let mut bytes = x1.to_bytes();
@@ -528,6 +542,7 @@ pub type EncodingCardCombination = Combination<EncodingCard>;
 impl EncodingCardCombination {
     pub fn flatten(&self) -> Vec<ark_bn254::Fr> {
         match self {
+            DefaultCombination => vec![],
             Single(c) => {
                 let (x, y) = c.0.xy().unwrap();
                 vec![x, y]
@@ -671,8 +686,10 @@ impl EncodingCardCombination {
         }
     }
 
+    #[inline]
     pub fn morph_to_classic(&self) -> Result<ClassicCardCombination> {
         match self {
+            DefaultCombination => Ok(DefaultCombination),
             Single(x) => {
                 let c = ENCODING_CARDS_MAPPING
                     .get(&x.0)
@@ -923,6 +940,7 @@ pub type CryptoCardCombination = Combination<CryptoCard>;
 impl CryptoCardCombination {
     pub fn flatten(&self) -> Vec<ark_bn254::Fr> {
         match self {
+            DefaultCombination => vec![],
             Single(c) => c.0.flatten().to_vec(),
             Pair(c1, c2) => {
                 let mut v1 = c1.0.flatten().to_vec();
@@ -1058,6 +1076,7 @@ impl CryptoCardCombination {
 
     pub fn morph_to_encoding(&self, reveals: &[EncodingCard]) -> EncodingCardCombination {
         match self {
+            DefaultCombination => DefaultCombination,
             Single(_) => Single(reveals[0]),
             Pair(_, _) => Pair(reveals[0], reveals[1]),
             ThreeOfAKind(_, _, _) => ThreeOfAKind(reveals[0], reveals[1], reveals[2]),

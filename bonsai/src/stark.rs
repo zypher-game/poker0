@@ -84,5 +84,7 @@ mod test {
         assert_eq!(commit.room_id, task.room_id);
         assert_eq!(commit.players_hand, task.players_hand);
         assert_eq!(commit.winner, 2);
+
+        println!("{}", commit.count); // 2542979
     }
 }
