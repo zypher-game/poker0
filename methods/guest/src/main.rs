@@ -7,10 +7,11 @@ use risc0_zkvm::guest::env;
 
 pub fn main() {
     let cycle_0 = env::cycle_count();
+    // todo！
+    // Utilizing array indexing to represent cards will reduce card serialization and minimize cycles.
     let task: Task0 = env::read();
     println!("read cycle:{}", env::cycle_count() - cycle_0);
 
-    // todo Try using array indexing to identify some data, aiming to reduce serialization.
     let Task0 {
         room_id,
         players_env,
@@ -19,12 +20,12 @@ pub fn main() {
 
     let mut input_hand = players_hand.clone();
 
-    let n = players_hand.len();
+    let n_players = players_hand.len();
     let n_round = players_env.len();
     let mut packs = vec![];
     let mut crypto_cards = vec![];
     let mut unmasked_cards = vec![];
-    let mut winner = 0;
+    let mut final_winner = 0;
     let mut round_winner = 0;
 
     for (round_id, round_env) in players_env.iter().enumerate() {
@@ -35,18 +36,17 @@ pub fn main() {
             assert!(round_env
                 .iter()
                 .rev()
-                .take(n - 1)
+                .take(n_players - 1)
                 .all(|x| x.action == PlayAction::PAAS));
         }
 
         for (i, player) in round_env.iter().enumerate() {
-            let turn_id = i;
-            let current = (round_winner + i) % n;
+            let current = (round_winner + i) % n_players;
 
             let action: u8 = player.action.into();
             let pack = (action as u128)
                 + ((round_id as u128) << 8)
-                + ((turn_id as u128) << 16)
+                + ((i as u128) << 16)  // turn_id
                 + ((room_id as u128) << 24);
             packs.push(pack);
 
@@ -71,8 +71,8 @@ pub fn main() {
                 let remainder_len = hand.len();
                 assert_eq!(hand_len, remainder_len + play_len);
 
-                if hand.len() == 0 && winner == 0 {
-                    winner = current + 1
+                if hand.len() == 0 && final_winner == 0 {
+                    final_winner = current + 1
                 }
 
                 round_max_cards = classic;
@@ -87,7 +87,7 @@ pub fn main() {
     env::commit(&TaskCommit {
         room_id,
         players_hand,
-        winner,
+        winner: final_winner,
         crypto_cards,
         unmasked_cards,
         count: env::cycle_count(),

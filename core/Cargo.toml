@@ -17,7 +17,7 @@ ark-serialize = { workspace = true }
 rand_chacha = "0.3"
 lazy_static = "1.4"
 serde = { version = "1.0", features = ["derive"] }
-hashbrown = "=0.12.3"
+hashbrown = "=0.14.3"
 serde_json = "1.0"
 
 [dev-dependencies]

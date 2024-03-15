@@ -85,6 +85,6 @@ mod test {
         assert_eq!(commit.players_hand, task.players_hand);
         assert_eq!(commit.winner, 2);
 
-        println!("{}", commit.count); // 2542979
+        println!("{}", commit.count); // 2561879
     }
 }

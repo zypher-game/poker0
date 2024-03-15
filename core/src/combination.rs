@@ -142,7 +142,6 @@ impl Default for ClassicCardCombination {
 }
 
 impl PartialEq for ClassicCardCombination {
-    #[inline]
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (DefaultCombination, DefaultCombination) => true,
@@ -224,7 +223,6 @@ impl PartialEq for ClassicCardCombination {
 }
 
 impl PartialOrd for ClassicCardCombination {
-    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         if self.weight() == other.weight() {
             match (self, other) {
