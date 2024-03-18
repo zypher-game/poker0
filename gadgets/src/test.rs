@@ -11,7 +11,7 @@ use rand_chacha::ChaChaRng;
 #[test]
 fn test_outsource() {
     let mut rng = ChaChaRng::from_seed([0u8; 32]);
-    let (players_keys, reveal_outsources, unmask_outsources) =
+    let (players_key, reveal_outsources, unmask_outsources, signature_outsources) =
         create_and_rescale_outsource(&mock_task(), N_PLAYS, N_CARDS);
 
     println!("-------------start------------");
@@ -21,9 +21,10 @@ fn test_outsource() {
     let start = std::time::Instant::now();
     let proof = prove_outsource(
         &mut rng,
-        &players_keys,
+        &players_key,
         &reveal_outsources,
         &unmask_outsources,
+        &signature_outsources,
         &PROVER_PARAMS,
     )
     .unwrap();
@@ -31,9 +32,10 @@ fn test_outsource() {
 
     verify_outsource(
         &verifier_params,
-        &players_keys,
+        &players_key,
         &reveal_outsources,
         &unmask_outsources,
+        &signature_outsources,
         &proof,
     )
     .unwrap();
@@ -41,9 +43,10 @@ fn test_outsource() {
     let start = std::time::Instant::now();
     let proof = prove_outsource(
         &mut rng,
-        &players_keys,
+        &players_key,
         &reveal_outsources,
         &unmask_outsources,
+        &signature_outsources,
         &PROVER_PARAMS,
     )
     .unwrap();
@@ -51,9 +54,10 @@ fn test_outsource() {
 
     verify_outsource(
         &verifier_params,
-        &players_keys,
+        &players_key,
         &reveal_outsources,
         &unmask_outsources,
+        &signature_outsources,
         &proof,
     )
     .unwrap();

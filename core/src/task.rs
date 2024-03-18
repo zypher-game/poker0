@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Task {
     pub room_id: usize,
-    pub players_keys: Vec<PublicKey>,
+    pub players_key: Vec<PublicKey>,
     pub players_env: Vec<Vec<PlayerEnv>>,
     pub players_hand: Vec<Vec<CryptoCard>>,
 }
@@ -19,7 +19,6 @@ pub struct TaskCommit {
     pub winner: usize,
     pub crypto_cards: Vec<CryptoCard>,
     pub unmasked_cards: Vec<EncodingCard>,
-    pub count: usize,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -49,12 +48,12 @@ impl Task {
 
         let Task {
             room_id,
-            players_keys,
+            players_key,
             players_env,
             players_hand,
         } = self.clone();
 
-        let n = players_keys.len();
+        let n = players_key.len();
         let n_round = players_env.len();
         let mut first_player_id = 0;
         let mut crypto_cards = vec![];
@@ -76,7 +75,7 @@ impl Task {
             for (i, player) in round_env.iter().enumerate() {
                 let turn_id = i;
                 let current = (first_player_id + i) % n;
-                let pk = &players_keys[current];
+                let pk = &players_key[current];
 
                 assert!(player
                     .verify_sign_with_params(&pk, room_id, round_id as u8, turn_id as u8)
@@ -118,7 +117,6 @@ impl Task {
             winner,
             crypto_cards,
             unmasked_cards,
-            count: 0,
         }
     }
 }

@@ -168,7 +168,7 @@ pub fn mock_task() -> Task {
         );
     }
 
-    let players_keys = vec![
+    let players_key = vec![
         alice.get_public_key(),
         bob.get_public_key(),
         charlie.get_public_key(),
@@ -621,7 +621,7 @@ pub fn mock_task() -> Task {
 
     Task {
         room_id: 1,
-        players_keys,
+        players_key,
         players_env,
         players_hand,
     }

@@ -91,6 +91,7 @@ mod test {
 
     #[test]
     fn stark_to_snark_test() {
+        dotenv::dotenv().ok();
         let task_bytes = mock_task0();
         let task: Task0 = from_slice(&task_bytes).unwrap();
 
@@ -155,6 +156,7 @@ mod test {
 
     #[test]
     fn onchain_verify_test() {
+        dotenv::dotenv().ok();
         let task_bytes = mock_task0();
         let task: Task0 = from_slice(&task_bytes).unwrap();
 

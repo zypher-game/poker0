@@ -4,8 +4,8 @@ use crate::{
     errors::{PokerError, Result},
     schnorr::{KeyPair, PublicKey, Signature},
 };
-use ark_bn254::Fr;
-use ark_ec::{AdditiveGroup, CurveGroup};
+use ark_ec::CurveGroup;
+use ark_serialize::CanonicalSerialize;
 use rand_chacha::rand_core::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
 use zshuffle::{
@@ -84,29 +84,36 @@ impl PlayerEnv {
         PlayerEnvBuilder::default()
     }
 
-    pub fn pack(&self) -> u128 {
+    pub fn pack(&self) -> Vec<u8> {
         let action: u8 = self.action.into();
-        (action as u128)
-            + ((self.round_id as u128) << 8)
-            + ((self.turn_id as u128) << 16)
-            + ((self.room_id as u128) << 24)
+        let mut msg = vec![action, self.round_id, self.turn_id];
+        msg.extend(self.room_id.to_be_bytes());
+
+        if self.action == PlayAction::PLAY {
+            for crypto_card in self.play_crypto_cards.clone().unwrap().to_vec().iter() {
+                let mut e1_bytes = vec![];
+                crypto_card
+                    .0
+                    .e1
+                    .serialize_uncompressed(&mut e1_bytes)
+                    .unwrap();
+                msg.extend(e1_bytes);
+
+                let mut e2_bytes = vec![];
+                crypto_card
+                    .0
+                    .e2
+                    .serialize_uncompressed(&mut e2_bytes)
+                    .unwrap();
+                msg.extend(e2_bytes);
+            }
+        }
+
+        msg
     }
 
     pub fn verify_sign(&self, pk: &PublicKey) -> Result<()> {
-        let pack = self.pack();
-        let mut msg = vec![Fr::from(pack)];
-
-        let mut cards = {
-            if self.action != PlayAction::PAAS {
-                self.play_crypto_cards.clone().unwrap().flatten()
-            } else {
-                vec![]
-            }
-        };
-        cards.extend_from_slice(&[Fr::ZERO].repeat(MAX_PLAYER_HAND_LEN * 4 - cards.len()));
-
-        msg.extend(cards);
-
+        let msg = self.pack();
         pk.verify(&self.signature, &msg)
     }
 
@@ -121,20 +128,7 @@ impl PlayerEnv {
         assert_eq!(self.round_id, round_id);
         assert_eq!(self.turn_id, turn_id);
 
-        let pack = self.pack();
-        let mut msg = vec![Fr::from(pack)];
-
-        let mut cards = {
-            if self.action != PlayAction::PAAS {
-                self.play_crypto_cards.clone().unwrap().flatten()
-            } else {
-                vec![]
-            }
-        };
-        cards.extend_from_slice(&[Fr::ZERO].repeat(MAX_PLAYER_HAND_LEN * 4 - cards.len()));
-
-        msg.extend(cards);
-
+        let msg = self.pack();
         pk.verify(&self.signature, &msg)
     }
 
@@ -260,30 +254,20 @@ impl PlayerEnvBuilder {
         prng: &mut R,
     ) -> Result<PlayerEnv> {
         self.validate_rules()?;
-        let pack = self.inner.pack();
-        let mut msg = vec![Fr::from(pack)];
 
-        let mut cards = {
-            if self.inner.action != PlayAction::PAAS {
-                let reveals = self.inner.verify_and_get_reveals().unwrap();
-                let encode_card = self
-                    .inner
-                    .play_crypto_cards
-                    .clone()
-                    .unwrap()
-                    .morph_to_encoding(&reveals);
-                let classic = encode_card.morph_to_classic().unwrap();
-                self.inner.play_classic_cards = Some(classic);
+        if self.inner.action == PlayAction::PLAY {
+            let reveals = self.inner.verify_and_get_reveals().unwrap();
+            let encode_card = self
+                .inner
+                .play_crypto_cards
+                .clone()
+                .unwrap()
+                .morph_to_encoding(&reveals);
+            let classic = encode_card.morph_to_classic().unwrap();
+            self.inner.play_classic_cards = Some(classic);
+        }
 
-                self.inner.play_crypto_cards.clone().unwrap().flatten()
-            } else {
-                vec![]
-            }
-        };
-        cards.extend_from_slice(&[Fr::ZERO].repeat(MAX_PLAYER_HAND_LEN * 4 - cards.len()));
-
-        msg.extend(cards);
-
+        let msg = self.inner.pack();
         let s = key.sign(&msg, prng)?;
 
         self.inner.signature = s;

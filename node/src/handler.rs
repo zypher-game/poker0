@@ -40,7 +40,7 @@ pub struct PokerHandler {
 
 impl PokerHandler {
     fn prove(&self) {
-        let players_keys = self
+        let players_key = self
             .players_order
             .iter()
             .map(|x| self.accounts.get(x).cloned().unwrap())
@@ -66,7 +66,7 @@ impl PokerHandler {
 
         let task = CoreTask {
             room_id: self.room_id as usize,
-            players_keys,
+            players_key,
             players_env,
             players_hand,
         };
@@ -80,12 +80,12 @@ impl PokerHandler {
 
         {
             let mut rng = ChaChaRng::from_entropy();
-            let (players_keys, reveal_outsources, unmask_outsources) =
+            let (players_key, reveal_outsources, unmask_outsources) =
                 create_and_rescale_outsource(&task, N_PLAYS, N_CARDS);
 
             let proof = prove_outsource(
                 &mut rng,
-                &players_keys,
+                &players_key,
                 &reveal_outsources,
                 &unmask_outsources,
                 &PROVER_PARAMS,

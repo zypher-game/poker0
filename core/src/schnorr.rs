@@ -75,15 +75,11 @@ impl KeyPair {
         self.public_key.clone()
     }
 
-    pub fn sign<R: CryptoRng + RngCore>(
-        &self,
-        msg: &[ark_bn254::Fr],
-        prng: &mut R,
-    ) -> Result<Signature> {
+    pub fn sign<R: CryptoRng + RngCore>(&self, msg: &[u8], prng: &mut R) -> Result<Signature> {
         let r = ark_ed_on_bn254::Fr::rand(prng);
         let big_r = EdwardsAffine::generator().mul(&r).into_affine();
 
-        let mut input = msg.to_vec();
+        let mut input = vec![ark_bn254::Fr::from_be_bytes_mod_order(msg)];
         input.extend_from_slice(&[
             self.get_public_key().0.x,
             self.get_public_key().0.y,
@@ -100,6 +96,31 @@ impl KeyPair {
 
         Ok(Signature { s, e })
     }
+
+    // pub fn sign<R: CryptoRng + RngCore>(&self, msg: &[u8], prng: &mut R) -> Result<Signature> {
+    //     let r = ark_ed_on_bn254::Fr::rand(prng);
+    //     let big_r = EdwardsAffine::generator().mul(&r).into_affine();
+
+    //     let mut pk_bytes = vec![];
+    //     self.get_public_key()
+    //         .0
+    //         .serialize_uncompressed(&mut pk_bytes)
+    //         .unwrap();
+    //     let mut r_bytes = vec![];
+    //     big_r.serialize_uncompressed(&mut r_bytes).unwrap();
+
+    //     let mut msg = msg.to_vec();
+    //     msg.extend(&pk_bytes);
+    //     msg.extend(&r_bytes);
+
+    //     let digest = Impl::hash_bytes(&msg);
+
+    //     let e = ark_ed_on_bn254::Fr::from_be_bytes_mod_order(digest.as_bytes());
+
+    //     let s = r.sub(&self.get_private_key().0.mul(e));
+
+    //     Ok(Signature { s, e })
+    // }
 }
 
 impl PrivateKey {
@@ -118,7 +139,7 @@ impl PublicKey {
         Self(ark_ed_on_bn254::EdwardsAffine::rand(prng))
     }
 
-    pub fn verify(&self, s: &Signature, msg: &[ark_bn254::Fr]) -> Result<()> {
+    pub fn verify(&self, s: &Signature, msg: &[u8]) -> Result<()> {
         let e_reduction =
             ark_ed_on_bn254::Fr::from_be_bytes_mod_order(&s.e.into_bigint().to_bytes_be());
         let big_r = EdwardsAffine::generator()
@@ -126,7 +147,7 @@ impl PublicKey {
             .add(self.0.mul(&e_reduction))
             .into_affine();
 
-        let mut input = msg.to_vec();
+        let mut input = vec![ark_bn254::Fr::from_be_bytes_mod_order(msg)];
         input.extend_from_slice(&[self.0.x, self.0.y, big_r.x, big_r.y]);
 
         let e = AnemoiJive254::eval_variable_length_hash(&input);
@@ -137,24 +158,45 @@ impl PublicKey {
             Ok(())
         }
     }
+
+    // pub fn verify(&self, s: &Signature, msg: &[u8]) -> Result<()> {
+    //     let big_r = EdwardsAffine::generator()
+    //         .mul(&s.s)
+    //         .add(self.0.mul(&s.e))
+    //         .into_affine();
+
+    //     let mut pk_bytes = vec![];
+    //     self.0.serialize_uncompressed(&mut pk_bytes).unwrap();
+    //     let mut r_bytes = vec![];
+    //     big_r.serialize_uncompressed(&mut r_bytes).unwrap();
+
+    //     let mut msg = msg.to_vec();
+    //     msg.extend(&pk_bytes);
+    //     msg.extend(&r_bytes);
+
+    //     let digest = Impl::hash_bytes(&msg);
+
+    //     let e = ark_ed_on_bn254::Fr::from_be_bytes_mod_order(digest.as_bytes());
+
+    //     if e != s.e {
+    //         Err(PokerError::VerifySignatureError)
+    //     } else {
+    //         Ok(())
+    //     }
+    // }
 }
 
 #[cfg(test)]
 mod test {
     use crate::schnorr::KeyPair;
-    use ark_std::UniformRand;
     use rand_chacha::{rand_core::SeedableRng, ChaChaRng};
 
     #[test]
     fn test_schnorr() {
         let mut prng = ChaChaRng::from_seed([0u8; 32]);
         let key_pair = KeyPair::sample(&mut prng);
-        let msg = vec![
-            ark_bn254::Fr::rand(&mut prng),
-            ark_bn254::Fr::rand(&mut prng),
-            ark_bn254::Fr::rand(&mut prng),
-        ];
-        let s = key_pair.sign(&msg, &mut prng).unwrap();
-        assert!(key_pair.get_public_key().verify(&s, &msg).is_ok());
+        let msg = "If I play a bomb card, how would you respond?";
+        let s = key_pair.sign(msg.as_bytes(), &mut prng).unwrap();
+        assert!(key_pair.get_public_key().verify(&s, msg.as_bytes()).is_ok());
     }
 }

@@ -72,10 +72,10 @@ fn gen_vk(directory: PathBuf) {
 
 // cargo run --release --features="gen no_vk" --bin gen-params permutation "./parameters"
 fn gen_premutation(directory: PathBuf) {
-    let (players_keys, reveal_outsources, unmask_outsources) =
+    let (players_key, reveal_outsources, unmask_outsources) =
         create_and_rescale_outsource(&mock_task(), N_PLAYS, N_CARDS);
 
-    let cs = build_cs(&players_keys, &reveal_outsources, &unmask_outsources);
+    let cs = build_cs(&players_key, &reveal_outsources, &unmask_outsources);
 
     let special = cs.compute_permutation();
 

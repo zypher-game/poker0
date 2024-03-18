@@ -5,6 +5,8 @@ use poker_core::{play::PlayAction, schnorr::PublicKey, task::Task};
 use reveals::RevealOutsource;
 use unmask::UnmaskOutsource;
 
+use crate::signatures::SignatureOutsource;
+
 pub mod build_cs;
 pub mod gen_params;
 pub mod public_keys;
@@ -28,15 +30,23 @@ pub fn get_divisor() -> (Fr, BigUint) {
 
 pub fn create_outsource(
     task: &Task,
-) -> (Vec<PublicKey>, Vec<RevealOutsource>, Vec<UnmaskOutsource>) {
+) -> (
+    Vec<PublicKey>,
+    Vec<RevealOutsource>,
+    Vec<UnmaskOutsource>,
+    Vec<SignatureOutsource>,
+) {
     let mut reveal_outsources = vec![];
     let mut unmask_outsources = vec![];
+    let mut signature_outsources = vec![];
 
     for plays in task.players_env.iter() {
         for env in plays.iter() {
+            let signature_outsource = SignatureOutsource::new(&env.signature, &env.pack());
+            signature_outsources.push(signature_outsource);
+
             if let PlayAction::PLAY = env.action {
                 let crypto_cards = env.play_crypto_cards.clone().unwrap().to_vec();
-
                 for (crypto_card, reveal) in crypto_cards.iter().zip(env.reveals.iter()) {
                     let reveal_cards = reveal.iter().map(|x| x.0).collect::<Vec<_>>();
                     let proofs = reveal.iter().map(|x| x.1).collect::<Vec<_>>();
@@ -62,9 +72,10 @@ pub fn create_outsource(
     assert_eq!(reveal_outsources.len(), unmask_outsources.len());
 
     (
-        task.players_keys.clone(),
+        task.players_key.clone(),
         reveal_outsources,
         unmask_outsources,
+        signature_outsources,
     )
 }
 
@@ -72,13 +83,28 @@ pub fn create_and_rescale_outsource(
     task: &Task,
     n_players: usize,
     n_cards: usize,
-) -> (Vec<PublicKey>, Vec<RevealOutsource>, Vec<UnmaskOutsource>) {
-    let (public_keys, mut reveal_outsources, mut unmask_outsources) = create_outsource(task);
+) -> (
+    Vec<PublicKey>,
+    Vec<RevealOutsource>,
+    Vec<UnmaskOutsource>,
+    Vec<SignatureOutsource>,
+) {
+    let (public_keys, mut reveal_outsources, mut unmask_outsources, mut signature_outsources) =
+        create_outsource(task);
 
     let n = reveal_outsources.len();
     let m = n % n_players;
     reveal_outsources.extend_from_slice(&reveal_outsources.clone()[m..(n_cards - 2 - n + m)]);
     unmask_outsources.extend_from_slice(&unmask_outsources.clone()[m..(n_cards - 2 - n + m)]);
 
-    (public_keys, reveal_outsources, unmask_outsources)
+    let n = signature_outsources.len();
+    let m = n % n_players;
+    signature_outsources.extend_from_slice(&signature_outsources.clone()[m..(n_cards - 2 - n + m)]);
+
+    (
+        public_keys,
+        reveal_outsources,
+        unmask_outsources,
+        signature_outsources,
+    )
 }

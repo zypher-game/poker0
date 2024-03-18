@@ -10,38 +10,25 @@ use plonk::{
     anemoi::{AnemoiJive, AnemoiJive254},
     turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS, VarIndex},
 };
-use poker_core::{
-    cards::CryptoCard,
-    play::MAX_PLAYER_HAND_LEN,
-    schnorr::{PublicKey, Signature},
-};
+use poker_core::schnorr::{PublicKey, Signature};
 
 use crate::get_divisor;
 
+#[derive(Default, Clone)]
 pub struct SignatureOutsource {
     pub signature: Signature,
-    pub pack_messages: u128,
-    pub play_cards: Option<Vec<CryptoCard>>,
+    pub pack_messages: Vec<u8>,
 
-    pub signature_var: (VarIndex, VarIndex),
     pub pack_messages_var: VarIndex,
-    pub play_card_vars: Option<Vec<(PointVar, PointVar)>>,
 }
 
 impl SignatureOutsource {
-    pub fn new(
-        signature: &Signature,
-        pack_messages: u128,
-        play_cards: &Option<Vec<CryptoCard>>,
-    ) -> Self {
+    pub fn new(signature: &Signature, pack_messages: &[u8]) -> Self {
         Self {
             signature: signature.clone(),
-            pack_messages,
-            play_cards: play_cards.clone(),
+            pack_messages: pack_messages.to_vec(),
 
-            signature_var: (0, 0),
             pack_messages_var: 0,
-            play_card_vars: None,
         }
     }
 
@@ -60,7 +47,7 @@ impl SignatureOutsource {
         let base_0 = g.mul(self.signature.s);
         let s = Fr::from_be_bytes_mod_order(&self.signature.s.into_bigint().to_bytes_be());
         let s_var = cs.new_variable(s);
-        let out_0 = cs.const_base_scalar_mul(g, s_var, 256);
+        let out_0 = cs.const_base_scalar_mul(g, s_var, 252);
 
         let m = get_divisor();
 
@@ -95,33 +82,16 @@ impl SignatureOutsource {
         let out_2 = cs.ecc_add(&out_0, &out_1, &base_0, &base_1);
         let out_2_aff = out_2.get_point().into_affine();
 
-        let mut inputs = vec![Fr::from(self.pack_messages)];
-
-        let mut cards = {
-            if let Some(x) = &self.play_cards {
-                let mut tmp = vec![];
-                x.iter().for_each(|y| tmp.extend(y.0.flatten()));
-                tmp
-            } else {
-                vec![]
-            }
-        };
-        cards.extend_from_slice(&[Fr::ZERO].repeat(MAX_PLAYER_HAND_LEN * 4 - cards.len()));
-
-        inputs.extend(cards);
-
-        let mut input_vars = inputs
-            .iter()
-            .map(|x| cs.new_variable(*x))
-            .collect::<Vec<_>>();
-
-        inputs.extend(vec![pk.0.x, pk.0.y, out_2_aff.x, out_2_aff.y]);
-        input_vars.extend(vec![
+        let pack = Fr::from_be_bytes_mod_order(&self.pack_messages);
+        let pack_var = cs.new_variable(pack);
+        let inputs = vec![pack, pk.0.x, pk.0.y, out_2_aff.x, out_2_aff.y];
+        let input_vars = vec![
+            pack_var,
             pk_var.get_x(),
             pk_var.get_y(),
             out_2.get_var().get_x(),
             out_2.get_var().get_y(),
-        ]);
+        ];
 
         let trace = AnemoiJive254::eval_variable_length_hash_with_trace(&inputs);
         let output = trace.output;
@@ -129,10 +99,12 @@ impl SignatureOutsource {
         cs.anemoi_variable_length_hash::<AnemoiJive254>(&trace, &input_vars, output_var);
 
         cs.equal(output_var, n_var);
+
+        self.pack_messages_var = pack_var;
     }
 
     pub fn prepare_pi_variables(&self, cs: &mut TurboCS<Fr>) {
-      cs.prepare_pi_variable(self.pack_messages_var)
+        cs.prepare_pi_variable(self.pack_messages_var)
     }
 }
 
@@ -148,21 +120,14 @@ mod test {
     fn test_signature_constraint_system() {
         let task = mock_task();
         let env = &task.players_env[0][0];
-        env.verify_sign(&task.players_keys[0]).unwrap();
+        env.verify_sign(&task.players_key[0]).unwrap();
 
         let mut cs = TurboCS::<Fr>::new();
         cs.load_anemoi_parameters::<AnemoiJive254>();
 
-        let pk_outsource = PublicKeyOutsource::new(&mut cs, &task.players_keys);
+        let pk_outsource = PublicKeyOutsource::new(&mut cs, &task.players_key);
 
-        let message = env.pack();
-        let play_cards = if let Some(x) = &env.play_crypto_cards {
-            Some(x.to_vec())
-        } else {
-            None
-        };
-
-        let mut sign_outsource = SignatureOutsource::new(&env.signature, message, &play_cards);
+        let mut sign_outsource = SignatureOutsource::new(&env.signature, &env.pack());
         sign_outsource.generate_constraints(
             &mut cs,
             &pk_outsource.public_keys[0],
@@ -172,6 +137,6 @@ mod test {
         let witness = cs.get_and_clear_witness();
         cs.verify_witness(&witness, &[]).unwrap();
 
-        assert_eq!(cs.size, 2847);
+        assert_eq!(cs.size, 2334);
     }
 }

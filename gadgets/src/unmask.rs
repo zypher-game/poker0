@@ -103,7 +103,7 @@ mod test {
         let mut cs = TurboCS::<Fr>::new();
         cs.load_anemoi_parameters::<AnemoiJive254>();
 
-        let pk_outsource = PublicKeyOutsource::new(&mut cs, &task.players_keys);
+        let pk_outsource = PublicKeyOutsource::new(&mut cs, &task.players_key);
         reveal_outsource.generate_constraints(&mut cs, &pk_outsource);
 
         let size = cs.size;

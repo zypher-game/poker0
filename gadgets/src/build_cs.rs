@@ -1,5 +1,6 @@
 use ark_bn254::Fr;
 use ark_ec::CurveGroup;
+use ark_ff::PrimeField;
 use plonk::{
     anemoi::AnemoiJive254,
     errors::Result,
@@ -13,7 +14,11 @@ use poker_core::schnorr::PublicKey;
 use rand_chacha::rand_core::{CryptoRng, RngCore};
 
 use crate::{
-    gen_params::params::{ProverParams, VerifierParams}, public_keys::PublicKeyOutsource, reveals::RevealOutsource, signatures::{self, SignatureOutsource}, unmask::UnmaskOutsource
+    gen_params::params::{ProverParams, VerifierParams},
+    public_keys::PublicKeyOutsource,
+    reveals::RevealOutsource,
+    signatures::SignatureOutsource,
+    unmask::UnmaskOutsource,
 };
 
 pub type Proof = PlonkProof<KZGCommitmentSchemeBN254>;
@@ -31,6 +36,7 @@ pub fn build_cs(
 ) -> TurboCS<Fr> {
     let mut reveal_outsources = reveal_outsources.to_vec();
     let mut unmask_outsources = unmask_outsources.to_vec();
+    let mut signature_outsources = signature_outsources.to_vec();
 
     let mut cs = TurboCS::new();
     cs.load_anemoi_parameters::<AnemoiJive254>();
@@ -52,12 +58,13 @@ pub fn build_cs(
         unmask_outsource.prepare_pi_variables(&mut cs);
     }
 
-
-    // let play_card_vars = reveal_outsources.iter()
-
-
-    for (i,signature_outsource) in signature_outsources.iter_mut().enumerate() {
-        signature_outsource.generate_constraints(&mut cs, &pk_outsources.public_keys[i],&pk_outsources.cs_vars[i]);
+    let n = public_keys.len();
+    for (i, signature_outsource) in signature_outsources.iter_mut().enumerate() {
+        signature_outsource.generate_constraints(
+            &mut cs,
+            &pk_outsources.public_keys[i % n],
+            &pk_outsources.cs_vars[i % n],
+        );
         signature_outsource.prepare_pi_variables(&mut cs);
     }
 
@@ -78,7 +85,12 @@ pub fn prove_outsource<R: CryptoRng + RngCore>(
     assert_eq!(reveal_outsources.len(), N_CARDS - N_PLAYS + 1);
     assert_eq!(unmask_outsources.len(), N_CARDS - N_PLAYS + 1);
 
-    let mut cs = build_cs(public_keys, reveal_outsources, unmask_outsources);
+    let mut cs = build_cs(
+        public_keys,
+        reveal_outsources,
+        unmask_outsources,
+        signature_outsources,
+    );
     let witness = cs.get_and_clear_witness();
 
     let mut transcript = Transcript::new(PLONK_PROOF_TRANSCRIPT);
@@ -102,6 +114,7 @@ pub fn verify_outsource(
     public_keys: &[PublicKey],
     reveal_outsources: &[RevealOutsource],
     unmask_outsources: &[UnmaskOutsource],
+    signature_outsources: &[SignatureOutsource],
     proof: &Proof,
 ) -> Result<()> {
     assert_eq!(public_keys.len(), N_PLAYS);
@@ -126,6 +139,10 @@ pub fn verify_outsource(
         online_inputs.push(aff.x);
         online_inputs.push(aff.y);
     }
+    for signature_outsource in signature_outsources.iter() {
+        let pack = Fr::from_be_bytes_mod_order(&signature_outsource.pack_messages);
+        online_inputs.push(pack);
+    }
 
     Ok(verifier(
         &mut transcript,
@@ -142,15 +159,22 @@ pub fn verify_outsource(
 mod test {
     use crate::create_outsource;
     use ark_ec::CurveGroup;
+    use ark_ff::PrimeField;
     use poker_core::mock_data::task::mock_task;
 
     use super::build_cs;
 
     #[test]
     fn test_build_cs() {
-        let (public_keys, reveal_outsources, unmask_outsources) = create_outsource(&mock_task());
+        let (public_keys, reveal_outsources, unmask_outsources, signature_outsources) =
+            create_outsource(&mock_task());
 
-        let mut cs = build_cs(&public_keys, &reveal_outsources, &unmask_outsources);
+        let mut cs = build_cs(
+            &public_keys,
+            &reveal_outsources,
+            &unmask_outsources,
+            &signature_outsources,
+        );
 
         let mut online_inputs = vec![];
         for pk in public_keys.iter() {
@@ -167,6 +191,10 @@ mod test {
             let aff = unmask_outsource.unmasked_card.into_affine();
             online_inputs.push(aff.x);
             online_inputs.push(aff.y);
+        }
+        for signature_outsource in signature_outsources.iter() {
+            let pack = ark_bn254::Fr::from_be_bytes_mod_order(&signature_outsource.pack_messages);
+            online_inputs.push(pack);
         }
 
         let witness = cs.get_and_clear_witness();

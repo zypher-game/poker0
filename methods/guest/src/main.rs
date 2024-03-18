@@ -1,3 +1,4 @@
+use ark_serialize::CanonicalSerialize;
 use poker_core::{
     combination::ClassicCardCombination,
     play::PlayAction,
@@ -10,7 +11,7 @@ pub fn main() {
     // todo！
     // Utilizing array indexing to represent cards will reduce card serialization and minimize cycles.
     let task: Task0 = env::read();
-    println!("read cycle:{}", env::cycle_count() - cycle_0);
+    println!("read cycle:{}", env::cycle_count() - cycle_0); 
 
     let Task0 {
         room_id,
@@ -44,11 +45,8 @@ pub fn main() {
             let current = (round_winner + i) % n_players;
 
             let action: u8 = player.action.into();
-            let pack = (action as u128)
-                + ((round_id as u128) << 8)
-                + ((i as u128) << 16)  // turn_id
-                + ((room_id as u128) << 24);
-            packs.push(pack);
+            let mut msg = vec![action, round_id as u8, i as u8];
+            msg.extend(room_id.to_be_bytes());
 
             if player.action == PlayAction::PLAY {
                 let play_crypto_cards = player.play_crypto_cards.clone().unwrap().to_vec();
@@ -67,6 +65,14 @@ pub fn main() {
                     if let Some(index) = hand.iter().position(|&x| x == element) {
                         hand.remove(index);
                     }
+
+                    let mut e1_bytes = vec![];
+                    element.0.e1.serialize_compressed(&mut e1_bytes).unwrap();
+                    msg.extend(e1_bytes);
+
+                    let mut e2_bytes = vec![];
+                    element.0.e2.serialize_compressed(&mut e2_bytes).unwrap();
+                    msg.extend(e2_bytes);
                 }
                 let remainder_len = hand.len();
                 assert_eq!(hand_len, remainder_len + play_len);
@@ -78,7 +84,10 @@ pub fn main() {
                 round_max_cards = classic;
                 current_winner = current;
             }
+
+            packs.push(msg);
         }
+
         round_winner = current_winner;
     }
 
@@ -90,6 +99,5 @@ pub fn main() {
         winner: final_winner,
         crypto_cards,
         unmasked_cards,
-        count: env::cycle_count(),
     });
 }

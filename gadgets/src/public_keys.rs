@@ -39,11 +39,11 @@ mod test {
     fn test_reveals_constraint_system() {
         let mut cs = TurboCS::<Fr>::new();
         let task = mock_task();
-        let pk_outsource = PublicKeyOutsource::new(&mut cs, &task.players_keys);
+        let pk_outsource = PublicKeyOutsource::new(&mut cs, &task.players_key);
         pk_outsource.prepare_pi_variables(&mut cs);
 
         let mut pi = vec![];
-        task.players_keys.iter().for_each(|x| {
+        task.players_key.iter().for_each(|x| {
             pi.push(x.0.x);
             pi.push(x.0.y);
         });
