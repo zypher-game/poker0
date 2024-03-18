@@ -13,10 +13,7 @@ use poker_core::schnorr::PublicKey;
 use rand_chacha::rand_core::{CryptoRng, RngCore};
 
 use crate::{
-    gen_params::params::{ProverParams, VerifierParams},
-    public_keys::PublicKeyOutsource,
-    reveals::RevealOutsource,
-    unmask::UnmaskOutsource,
+    gen_params::params::{ProverParams, VerifierParams}, public_keys::PublicKeyOutsource, reveals::RevealOutsource, signatures::{self, SignatureOutsource}, unmask::UnmaskOutsource
 };
 
 pub type Proof = PlonkProof<KZGCommitmentSchemeBN254>;
@@ -30,6 +27,7 @@ pub fn build_cs(
     public_keys: &[PublicKey],
     reveal_outsources: &[RevealOutsource],
     unmask_outsources: &[UnmaskOutsource],
+    signature_outsources: &[SignatureOutsource],
 ) -> TurboCS<Fr> {
     let mut reveal_outsources = reveal_outsources.to_vec();
     let mut unmask_outsources = unmask_outsources.to_vec();
@@ -54,6 +52,15 @@ pub fn build_cs(
         unmask_outsource.prepare_pi_variables(&mut cs);
     }
 
+
+    // let play_card_vars = reveal_outsources.iter()
+
+
+    for (i,signature_outsource) in signature_outsources.iter_mut().enumerate() {
+        signature_outsource.generate_constraints(&mut cs, &pk_outsources.public_keys[i],&pk_outsources.cs_vars[i]);
+        signature_outsource.prepare_pi_variables(&mut cs);
+    }
+
     cs.pad();
 
     cs
@@ -64,6 +71,7 @@ pub fn prove_outsource<R: CryptoRng + RngCore>(
     public_keys: &[PublicKey],
     reveal_outsources: &[RevealOutsource],
     unmask_outsources: &[UnmaskOutsource],
+    signature_outsources: &[SignatureOutsource],
     prover_params: &ProverParams,
 ) -> Result<Proof> {
     assert_eq!(public_keys.len(), N_PLAYS);

@@ -26,4 +26,3 @@ fn main() {
 
     prove_task(&task0);
 }
-

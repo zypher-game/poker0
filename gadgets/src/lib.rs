@@ -9,7 +9,7 @@ pub mod build_cs;
 pub mod gen_params;
 pub mod public_keys;
 pub mod reveals;
-// pub mod signatures;
+pub mod signatures;
 pub mod unmask;
 
 #[cfg(test)]
