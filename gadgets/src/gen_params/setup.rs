@@ -3,16 +3,16 @@
 #![cfg_attr(any(feature = "no_srs", feature = "no_vk"), allow(unused))]
 
 use ark_bn254::G1Projective;
-use gadgets::{
-    build_cs::{build_cs, N_CARDS, N_PLAYS},
-    create_and_rescale_outsource,
-    gen_params::{params::VerifierParams, SRS},
-};
 use plonk::{
     poly_commit::kzg_poly_commitment::KZGCommitmentSchemeBN254,
     turboplonk::constraint_system::ConstraintSystem,
 };
 use poker_core::mock_data::task::mock_task;
+use poker_gadgets::{
+    build_cs::{build_cs, N_CARDS, N_PLAYS},
+    create_and_rescale_outsource,
+    gen_params::{params::VerifierParams, SRS},
+};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -72,10 +72,15 @@ fn gen_vk(directory: PathBuf) {
 
 // cargo run --release --features="gen no_vk" --bin gen-params permutation "./parameters"
 fn gen_premutation(directory: PathBuf) {
-    let (players_key, reveal_outsources, unmask_outsources) =
+    let (players_key, reveal_outsources, unmask_outsources, signature_outsources) =
         create_and_rescale_outsource(&mock_task(), N_PLAYS, N_CARDS);
 
-    let cs = build_cs(&players_key, &reveal_outsources, &unmask_outsources);
+    let cs = build_cs(
+        &players_key,
+        &reveal_outsources,
+        &unmask_outsources,
+        &signature_outsources,
+    );
 
     let special = cs.compute_permutation();
 
