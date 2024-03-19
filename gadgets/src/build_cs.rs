@@ -144,6 +144,22 @@ pub fn verify_outsource(
         online_inputs.push(pack);
     }
 
+    // {
+    //     use ark_ff::BigInteger;
+    //     fn fr_to_hex<F: PrimeField>(x: &F) -> String {
+    //         let x = x.into_bigint().to_bytes_be();
+    //         let code = hex::encode(&x);
+    //         format!("0x{}",code )
+    //     }
+
+    //     let mut pi = vec![];
+    //     for x in online_inputs.iter() {
+    //         pi.push(fr_to_hex(x));
+    //     }
+
+    //     println!("pi:{:?}",pi);
+    // }
+
     Ok(verifier(
         &mut transcript,
         &verifier_params.shrunk_vk,

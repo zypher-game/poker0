@@ -1,4 +1,4 @@
-use poker_core::{mock_data::{ task::mock_task}, task::{Task0, TaskCommit}};
+use poker_core::{mock_data::task::mock_task, task::Task0};
 use poker_methods::{POKER_METHOD_ELF, POKER_METHOD_ID};
 use risc0_zkvm::{default_executor, default_prover, ExecutorEnv};
 
@@ -30,7 +30,7 @@ pub fn execute_local(task: &Task0) {
     let _session_info = exec.execute(env, POKER_METHOD_ELF).unwrap();
 
     // Executing the following code requires the deserialize0 feature, but such mack tack will fail.
-    // 
+    //
     // let journal : TaskCommit = session_info.journal.decode().unwrap();
     // assert_eq!(journal.room_id, task.room_id);
     // assert_eq!(journal.players_hand, task.players_hand);

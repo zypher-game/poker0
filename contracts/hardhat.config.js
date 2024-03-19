@@ -11,6 +11,7 @@ module.exports = {
         auto: true,
         interval: 2000
       },
+      allowUnlimitedContractSize: true,
     },
   },
   solidity: {
