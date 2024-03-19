@@ -1,6 +1,6 @@
-use ark_bn254::{Fq, Fr, G1Affine};
+use ark_bn254::{Fr, G1Affine};
 use ark_ec::AffineRepr;
-use ark_ff::{AdditiveGroup, BigInteger, Field, PrimeField};
+use ark_ff::{BigInteger, Field, PrimeField};
 use num_bigint::BigUint;
 use plonk::{
     poly_commit::{field_polynomial::FpPolynomial, kzg_poly_commitment::KZGCommitmentSchemeBN254},
@@ -8,7 +8,11 @@ use plonk::{
 };
 use poker_core::{play::PlayAction, schnorr::PublicKey, task::Task};
 use reveals::RevealOutsource;
-use std::{fs, fs::File, io::Write, path::Path};
+use std::{
+    fs::{self, File},
+    io::Write,
+    path::Path,
+};
 use unmask::UnmaskOutsource;
 
 use crate::signatures::SignatureOutsource;
@@ -116,17 +120,23 @@ pub fn create_and_rescale_outsource(
 }
 
 pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSchemeBN254>) {
+    fn fr_to_hex<F: PrimeField>(x: &F) -> String {
+        let x = x.into_bigint().to_bytes_be();
+        format!("0x{}", hex::encode(&x))
+    }
+
     let dir = "solidity";
     if !Path::new(dir).exists() {
         fs::create_dir(dir).unwrap();
     }
 
+    // -------1. export verivier key------
     let mut file = File::create(format!("{}/VerifierKey.sol", dir)).unwrap();
 
     let mut content = String::from("// SPDX-License-Identifier: UNLICENSED\n");
     content.push_str("pragma solidity ^0.8.20;\n");
     content.push_str("\n");
-    content.push_str(&format!("library {} ", format!("VerifierKey")));
+    content.push_str(&format!("library {} ", "VerifierKey"));
     content.push_str("{\n");
 
     content.push_str("function load(uint256 vk,uint256 pi) internal pure  {\n");
@@ -138,15 +148,18 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
     content.push_str("// The commitments of the selectors (9).\n");
     for cm_q in verifier_params.cm_q_vec.iter() {
         let tmp: G1Affine = cm_q.0.into();
-        let x = tmp.x().unwrap_or(Fq::ZERO);
-        let x = x.into_bigint().to_string();
-
-        let y = tmp.y().unwrap_or(Fq::ZERO);
-        let y = y.into_bigint().to_string();
-
-        content.push_str(&format!("mstore(add(vk,0x{:x}), {})\n", index, x));
+        let (x, y) = tmp.xy().unwrap_or_default();
+        content.push_str(&format!(
+            "mstore(add(vk,0x{:x}), {})\n",
+            index,
+            fr_to_hex(&x)
+        ));
         index += 0x20;
-        content.push_str(&format!("mstore(add(vk,0x{:x}), {})\n", index, y));
+        content.push_str(&format!(
+            "mstore(add(vk,0x{:x}), {})\n",
+            index,
+            fr_to_hex(&y)
+        ));
         index += 0x20;
     }
     content.push_str("\n");
@@ -155,15 +168,18 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
     content.push_str("// The commitments of perm1, perm2, ..., perm_{n_wires_per_gate}.\n");
     for cm_s in verifier_params.cm_s_vec.iter() {
         let tmp: G1Affine = cm_s.0.into();
-        let x = tmp.x().unwrap_or(Fq::ZERO);
-        let x = x.into_bigint().to_string();
-
-        let y = tmp.y().unwrap_or(Fq::ZERO);
-        let y = y.into_bigint().to_string();
-
-        content.push_str(&format!("mstore(add(vk,0x{:x}), {})\n", index, x));
+        let (x, y) = tmp.xy().unwrap_or_default();
+        content.push_str(&format!(
+            "mstore(add(vk,0x{:x}), {})\n",
+            index,
+            fr_to_hex(&x)
+        ));
         index += 0x20;
-        content.push_str(&format!("mstore(add(vk,0x{:x}), {})\n", index, y));
+        content.push_str(&format!(
+            "mstore(add(vk,0x{:x}), {})\n",
+            index,
+            fr_to_hex(&y)
+        ));
         index += 0x20;
     }
     content.push_str("\n");
@@ -172,15 +188,18 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
     content.push_str("// The commitment of the boolean selector.\n");
     {
         let tmp: G1Affine = verifier_params.cm_qb.0.into();
-        let x = tmp.x().unwrap_or(Fq::ZERO);
-        let x = x.into_bigint().to_string();
-
-        let y = tmp.y().unwrap_or(Fq::ZERO);
-        let y = y.into_bigint().to_string();
-
-        content.push_str(&format!("mstore(add(vk,0x{:x}), {})\n", index, x));
+        let (x, y) = tmp.xy().unwrap_or_default();
+        content.push_str(&format!(
+            "mstore(add(vk,0x{:x}), {})\n",
+            index,
+            fr_to_hex(&x)
+        ));
         index += 0x20;
-        content.push_str(&format!("mstore(add(vk,0x{:x}), {})\n", index, y));
+        content.push_str(&format!(
+            "mstore(add(vk,0x{:x}), {})\n",
+            index,
+            fr_to_hex(&y)
+        ));
         index += 0x20;
     }
     content.push_str("\n");
@@ -189,42 +208,50 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
     content.push_str("// The commitments of the preprocessed round key selectors.\n");
     for cm_qrk in verifier_params.cm_prk_vec.iter() {
         let tmp: G1Affine = cm_qrk.0.into();
-        let x = tmp.x().unwrap_or(Fq::ZERO);
-        let x = x.into_bigint().to_string();
-
-        let y = tmp.y().unwrap_or(Fq::ZERO);
-        let y = y.into_bigint().to_string();
-
-        content.push_str(&format!("mstore(add(vk,0x{:x}), {})\n", index, x));
+        let (x, y) = tmp.xy().unwrap_or_default();
+        content.push_str(&format!(
+            "mstore(add(vk,0x{:x}), {})\n",
+            index,
+            fr_to_hex(&x)
+        ));
         index += 0x20;
-        content.push_str(&format!("mstore(add(vk,0x{:x}), {})\n", index, y));
+        content.push_str(&format!(
+            "mstore(add(vk,0x{:x}), {})\n",
+            index,
+            fr_to_hex(&y)
+        ));
         index += 0x20;
     }
     content.push_str("\n");
 
     // The Anemoi generator.
     content.push_str("// The Anemoi generator.\n");
-    let x = verifier_params.anemoi_generator.into_bigint().to_string();
-    content.push_str(&format!("mstore(add(vk,0x{:x}), {})\n", index, x));
+    content.push_str(&format!(
+        "mstore(add(vk,0x{:x}), {})\n",
+        index,
+        fr_to_hex(&verifier_params.anemoi_generator)
+    ));
     index += 0x20;
     content.push_str("\n");
 
     // The Anemoi generator's inverse.
     content.push_str("// The Anemoi generator's inverse.\n");
-    let x = verifier_params
-        .anemoi_generator_inv
-        .into_bigint()
-        .to_string();
-    content.push_str(&format!("mstore(add(vk,0x{:x}), {})\n", index, x));
+    content.push_str(&format!(
+        "mstore(add(vk,0x{:x}), {})\n",
+        index,
+        fr_to_hex(&verifier_params.anemoi_generator_inv)
+    ));
     index += 0x20;
     content.push_str("\n");
 
     // `n_wires_per_gate` different quadratic non-residue in F_q-{0}.
     content.push_str("// `n_wires_per_gate` different quadratic non-residue in F_q-{0}.\n");
     for k in verifier_params.k.iter() {
-        let x = k.into_bigint().to_string();
-
-        content.push_str(&format!("mstore(add(vk,0x{:x}), {})\n", index, x));
+        content.push_str(&format!(
+            "mstore(add(vk,0x{:x}), {})\n",
+            index,
+            fr_to_hex(k)
+        ));
         index += 0x20;
     }
     content.push_str("\n");
@@ -233,8 +260,11 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
     content.push_str("// The domain's group generator with csSize.\n");
     let domain = FpPolynomial::<Fr>::evaluation_domain(verifier_params.cs_size).unwrap();
     let root = domain.group_gen;
-    let x = root.into_bigint().to_string();
-    content.push_str(&format!("mstore(add(vk,0x{:x}), {})\n", index, x));
+    content.push_str(&format!(
+        "mstore(add(vk,0x{:x}), {})\n",
+        index,
+        fr_to_hex(&root)
+    ));
     index += 0x20;
     content.push_str("\n");
 
@@ -252,28 +282,88 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
     ));
     index += 0x20;
 
-    // The public constrain variables indices.
+    // // The public constrain variables indices.
+    // content.push_str("// The public constrain variables indices.\n");
+    // for k in verifier_params.public_vars_constraint_indices.iter() {
+    //     let root_pow = root.pow(&[*k as u64]);
+    //     content.push_str(&format!("mstore(add(pi,0x{:x}), {})\n", index, fr_to_hex(&root_pow)));
+    //     index += 0x20;
+    // }
+    // content.push_str("\n");
+
+    // // The constrain lagrange base by public constrain variables.
+    // content.push_str("// The constrain lagrange base by public constrain variables.\n");
+    // for k in verifier_params.lagrange_constants.iter() {
+    //     content.push_str(&format!("mstore(add(pi,0x{:x}), {})\n", index, fr_to_hex(k)));
+    //     index += 0x20;
+    // }
+    // content.push_str("\n");
+
+    content.push_str("}\n");
+    content.push_str("}\n");
+    content.push_str("}\n");
+
+    file.write_all(content.as_bytes()).unwrap();
+
+    // -------2. Export the public constrain variables indices------
+    let mut file = File::create(format!("{}/VerifierKeyExtra1.sol", dir)).unwrap();
+
+    let mut content = String::from("// SPDX-License-Identifier: UNLICENSED\n");
+    content.push_str("pragma solidity ^0.8.20;\n");
+    content.push_str("\n");
+    content.push_str(&format!("contract {} ", format!("VerifierKeyExtra1")));
+    content.push_str("{\n");
+    content.push_str(&format!(
+        "uint256[{}] public PI_POLY_INDICES_LOC;",
+        verifier_params.public_vars_constraint_indices.len()
+    ));
+    content.push_str("\n");
+
+    content.push_str("constructor() {\n");
     content.push_str("// The public constrain variables indices.\n");
-    for k in verifier_params.public_vars_constraint_indices.iter() {
+    for (i, k) in verifier_params
+        .public_vars_constraint_indices
+        .iter()
+        .enumerate()
+    {
         let root_pow = root.pow(&[*k as u64]);
-        let x = root_pow.into_bigint().to_string();
-        content.push_str(&format!("mstore(add(pi,0x{:x}), {})\n", index, x));
-        index += 0x20;
+        content.push_str(&format!(
+            "PI_POLY_INDICES_LOC[{}] = {}; \n",
+            i,
+            fr_to_hex(&root_pow)
+        ));
     }
+    content.push_str("}\n");
+    content.push_str("}");
+
+    file.write_all(content.as_bytes()).unwrap();
+
+    // -------3. Export the constrain lagrange base by public constrain variables------
+    let mut file = File::create(format!("{}/VerifierKeyExtra2.sol", dir)).unwrap();
+
+    let mut content = String::from("// SPDX-License-Identifier: UNLICENSED\n");
+    content.push_str("pragma solidity ^0.8.20;\n");
+    content.push_str("\n");
+    content.push_str(&format!("contract {} ", format!("VerifierKeyExtra2")));
+    content.push_str("{\n");
+    content.push_str(&format!(
+        "uint256[{}] public PI_POLY_LAGRANGE_LOC;",
+        verifier_params.public_vars_constraint_indices.len()
+    ));
     content.push_str("\n");
 
-    // The constrain lagrange base by public constrain variables.
+    content.push_str("constructor() {\n");
     content.push_str("// The constrain lagrange base by public constrain variables.\n");
-    for k in verifier_params.lagrange_constants.iter() {
-        let x = k.into_bigint().to_string();
-        content.push_str(&format!("mstore(add(pi,0x{:x}), {})\n", index, x));
+    for (i, k) in verifier_params.lagrange_constants.iter().enumerate() {
+        content.push_str(&format!(
+            "PI_POLY_LAGRANGE_LOC[{}] = {}; \n",
+            i,
+            fr_to_hex(k)
+        ));
         index += 0x20;
     }
-    content.push_str("\n");
-
     content.push_str("}\n");
-    content.push_str("}\n");
-    content.push_str("}\n");
+    content.push_str("}");
 
     file.write_all(content.as_bytes()).unwrap();
 }
@@ -281,44 +371,40 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
 pub fn export_solidity_proof(proof: &PlonkProof<KZGCommitmentSchemeBN254>) -> String {
     fn fr_to_hex<F: PrimeField>(x: &F) -> String {
         let x = x.into_bigint().to_bytes_be();
-        let code = hex::encode(&x);
-        code
+        hex::encode(&x)
     }
 
     let mut res = String::from("0x");
 
     for cm_q in proof.cm_w_vec.iter() {
         let tmp: G1Affine = cm_q.0.into();
+        let (x, y) = tmp.xy().unwrap_or_default();
 
-        let x = tmp.x().unwrap_or(Fq::ZERO);
         let x = fr_to_hex(&x);
         res += &x;
 
-        let y = tmp.y().unwrap_or(Fq::ZERO);
         let y = fr_to_hex(&y);
         res += &y;
     }
 
     for cm_t in proof.cm_t_vec.iter() {
         let tmp: G1Affine = cm_t.0.into();
+        let (x, y) = tmp.xy().unwrap_or_default();
 
-        let x = tmp.x().unwrap_or(Fq::ZERO);
         let x = fr_to_hex(&x);
         res += &x;
 
-        let y = tmp.y().unwrap_or(Fq::ZERO);
         let y = fr_to_hex(&y);
         res += &y;
     }
 
     {
         let tmp: G1Affine = proof.cm_z.0.into();
+        let (x, y) = tmp.xy().unwrap_or_default();
 
-        let x = tmp.x().unwrap_or(Fq::ZERO);
         let x = fr_to_hex(&x);
         res += &x;
 
-        let y = tmp.y().unwrap_or(Fq::ZERO);
         let y = fr_to_hex(&y);
         res += &y;
     }
@@ -355,27 +441,36 @@ pub fn export_solidity_proof(proof: &PlonkProof<KZGCommitmentSchemeBN254>) -> St
 
     {
         let tmp: G1Affine = proof.opening_witness_zeta.0.into();
+        let (x, y) = tmp.xy().unwrap_or_default();
 
-        let x = tmp.x().unwrap_or(Fq::ZERO);
         let x = fr_to_hex(&x);
         res += &x;
 
-        let y = tmp.y().unwrap_or(Fq::ZERO);
         let y = fr_to_hex(&y);
         res += &y;
     }
 
     {
         let tmp: G1Affine = proof.opening_witness_zeta_omega.0.into();
+        let (x, y) = tmp.xy().unwrap_or_default();
 
-        let x = tmp.x().unwrap_or(Fq::ZERO);
         let x = fr_to_hex(&x);
         res += &x;
 
-        let y = tmp.y().unwrap_or(Fq::ZERO);
         let y = fr_to_hex(&y);
         res += &y;
     }
 
     res
+}
+
+#[cfg(test)]
+mod test_export {
+    use crate::{export_solidity_vk, gen_params::params::VerifierParams};
+
+    #[test]
+    fn test_export_vk() {
+        let verifier_params = VerifierParams::get().unwrap();
+        export_solidity_vk(&verifier_params.verifier_params);
+    }
 }

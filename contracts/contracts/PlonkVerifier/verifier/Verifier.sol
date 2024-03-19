@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-contract PlonkVerifier {
+contract Verifier {
     // The proof memory locations.
     uint256 internal constant CM_W0_X_LOC = 0x200 + 0x00;
     uint256 internal constant CM_W0_Y_LOC = 0x200 + 0x20;
@@ -140,12 +140,15 @@ contract PlonkVerifier {
     // and the following slot for the length of pulic inputs represents the constrain lagrange base by public inputs.
     uint256 internal constant PI_POLY_RELATED_LOC = 0x200 + 0x11a0;
 
-    function verify_proof() public view returns (bool) {
+    bytes4 internal constant sig1 = 0x9e01fc03;
+    bytes4 internal constant sig2 = 0x264f76ef;
+
+    function verify_proof(address vk1, address vk2) public view returns (bool) {
         assembly {
             // The scalar field of BN254.
             let r := 21888242871839275222246405745257275088548364400416034343698204186575808495617
 
-            mstore(0x40, add(mul(mload(PI_POLY_RELATED_LOC), 0x60), add(0x20, PI_POLY_RELATED_LOC)))
+            mstore(0x40, add(mul(mload(PI_POLY_RELATED_LOC), 0x20), add(0x20, PI_POLY_RELATED_LOC)))
 
             mstore(mload(SUCCESS_LOC), true)
 
@@ -281,6 +284,18 @@ contract PlonkVerifier {
                 mstore(mload(SUCCESS_LOC), and(mload(mload(SUCCESS_LOC)), success_flag))
             }
 
+            function loadPiIndice(sig, addr, i) -> result {
+                let pi_ptr := add(mul(mload(PI_POLY_RELATED_LOC), 0x40), add(0x20, PI_POLY_RELATED_LOC)) // skip tmp
+                mstore(pi_ptr, sig)
+                mstore(add(pi_ptr, 0x04), i)
+
+                // PI_POLY_INDICES_LOC
+                let success_flag := staticcall(gas(), addr, pi_ptr, 0x24, pi_ptr, 0x20)
+                mstore(mload(SUCCESS_LOC), and(mload(mload(SUCCESS_LOC)), success_flag))
+
+                result := mload(pi_ptr)
+            }
+
             // 1. compute all challenges.
             {
                 let external_transcript_length := mload(EXTERNAL_TRANSCRIPT_LENGTH_LOC)
@@ -352,7 +367,7 @@ contract PlonkVerifier {
                 mstore(add(ptr, 0x480), mload(K_4_LOC))
 
                 let pi_length := mload(PI_POLY_RELATED_LOC)
-                let pi_ptr := add(mul(mload(PI_POLY_RELATED_LOC), 0x40), add(PI_POLY_RELATED_LOC, 0x20))
+                let pi_ptr := add(PI_POLY_RELATED_LOC, 0x20)
                 for {
                     let i := 0
                 } lt(i, pi_length) {
@@ -502,7 +517,8 @@ contract PlonkVerifier {
 
             // 3. compute PI(\zeta).
             {
-                let length := mload(PI_POLY_RELATED_LOC)
+                let pi_length := mload(PI_POLY_RELATED_LOC)
+                let pi_ptr := add(PI_POLY_RELATED_LOC, 0x20)
                 let denominator_prod := 1
                 let zeta := mload(ZETA_LOC)
 
@@ -510,31 +526,29 @@ contract PlonkVerifier {
 
                 for {
                     let i := 0
-                } lt(i, sub(length, 1)) {
+                } lt(i, sub(pi_length, 1)) {
                     i := add(i, 1)
                 } {
-                    let root_pow := mload(add(add(PI_POLY_RELATED_LOC, 0x20), mul(i, 0x20)))
+                    let root_pow := loadPiIndice(sig1, vk1, i)
                     let denominator := addmod(zeta, sub(r, root_pow), r)
                     mstore(end_ptr, denominator)
 
                     end_ptr := add(end_ptr, 0x20)
                 }
 
-                let root_pow := mload(add(add(PI_POLY_RELATED_LOC, 0x20), mul(sub(length, 1), 0x20)))
+                let root_pow := loadPiIndice(sig1, vk1, sub(pi_length, 1))
                 let denominator := addmod(zeta, sub(r, root_pow), r)
                 mstore(end_ptr, denominator)
 
                 batch_invert(end_ptr)
 
-                let lagrange_constant_ptr := add(add(PI_POLY_RELATED_LOC, 0x20), mul(length, 0x20))
-                let pi_ptr := add(mul(mload(PI_POLY_RELATED_LOC), 0x40), add(PI_POLY_RELATED_LOC, 0x20))
                 let eval := 0
                 for {
                     let i := 0
-                } lt(i, length) {
+                } lt(i, pi_length) {
                     i := add(i, 1)
                 } {
-                    let lagrange_constant := mload(add(lagrange_constant_ptr, mul(i, 0x20)))
+                    let lagrange_constant := loadPiIndice(sig2, vk2, i)
                     let public_input := mload(add(pi_ptr, mul(i, 0x20)))
 
                     let tmp := mulmod(

@@ -1,6 +1,6 @@
 use crate::{
     build_cs::{prove_outsource, verify_outsource, N_CARDS, N_PLAYS},
-    create_and_rescale_outsource, export_solidity_proof,
+    create_and_rescale_outsource,
     gen_params::{params::VerifierParams, PROVER_PARAMS},
 };
 use ark_std::rand::SeedableRng;
@@ -30,7 +30,7 @@ fn test_outsource() {
     .unwrap();
     println!("Prove time: {:.2?}", start.elapsed());
 
-    //   println!("proof:{}",export_solidity_proof(&proof));
+    // println!("proof:{}",export_solidity_proof(&proof));
 
     verify_outsource(
         &verifier_params,

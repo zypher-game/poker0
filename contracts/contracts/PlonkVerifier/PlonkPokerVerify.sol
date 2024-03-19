@@ -1,11 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import "./verifier/PlonkVerifier.sol";
+import "./verifier/Verifier.sol";
 import "./VerifierKey.sol";
 import "./ExternalTranscript.sol";
 
-contract PokerVerifier is PlonkVerifier {
+contract PlonkPokerVerifier is Verifier {
+    address _extraVk1;
+    address _extraVk2;
+
+    constructor(address _vk1, address _vk2) {
+        _extraVk1 = _vk1;
+        _extraVk2 = _vk2;
+    }
+
     function verify(bytes calldata _proof, uint256[] calldata _publicInputs) public view returns (bool) {
         VerifierKey.load(CM_Q0_X_LOC, PI_POLY_RELATED_LOC);
         ExternalTranscript.load(EXTERNAL_TRANSCRIPT_LENGTH_LOC);
@@ -63,7 +71,7 @@ contract PokerVerifier is PlonkVerifier {
         assembly {
             let pi_ptr := add(calldataload(0x24), 0x04)
             let pi_length := calldataload(add(pi_ptr, 0x00))
-            let store_ptr := add(add(PI_POLY_RELATED_LOC, 0x20), mul(pi_length, 0x40))
+            let store_ptr := add(PI_POLY_RELATED_LOC, 0x20)
 
             for {
                 let i := 0
@@ -74,6 +82,6 @@ contract PokerVerifier is PlonkVerifier {
             }
         }
 
-        return verify_proof();
+        return verify_proof(_extraVk1, _extraVk2);
     }
 }
