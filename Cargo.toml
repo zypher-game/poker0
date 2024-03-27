@@ -3,8 +3,8 @@ members = [
   "core",
   "host",
   "methods",
-  "bonsai", 
-  "plonk", 
+  "bonsai",
+  "plonk",
   "gadgets",
   "wasm",
   "node"

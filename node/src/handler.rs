@@ -39,6 +39,9 @@ pub struct PokerHandler {
 }
 
 impl PokerHandler {
+    /// when game over, prove the game process and the result,
+    /// use risc0 to prove the process of player,
+    /// use plonk to prove the shuffle & reveal cards is corrent.
     fn prove(&self) {
         let players_key = self
             .players_order
@@ -73,25 +76,28 @@ impl PokerHandler {
 
         {
             let task0 = task.convert0();
-            let (receipt, session_id) = prove_bonsai(&task0).unwrap();
+            let (_receipt, session_id) = prove_bonsai(&task0).unwrap();
 
-            let snark_proof = stark_to_snark(session_id).unwrap();
+            let _snark_proof = stark_to_snark(session_id).unwrap();
         }
 
         {
             let mut rng = ChaChaRng::from_entropy();
-            let (players_key, reveal_outsources, unmask_outsources) =
+            let (players_key, reveal_outsources, unmask_outsources, signature_outsources) =
                 create_and_rescale_outsource(&task, N_PLAYS, N_CARDS);
 
-            let proof = prove_outsource(
+            let _proof = prove_outsource(
                 &mut rng,
                 &players_key,
                 &reveal_outsources,
                 &unmask_outsources,
+                &signature_outsources,
                 &PROVER_PARAMS,
             )
             .unwrap();
         }
+
+        // TODO serialize snark proof & plonk proof for onchain verify
     }
 }
 
@@ -210,6 +216,20 @@ impl Handler for PokerHandler {
             },
             Default::default(),
         )
+    }
+
+    /// when player connected to server, will send remain cards
+    async fn online(&mut self, player: PeerId) -> Result<HandleResult<Self::Param>> {
+        // check the remain cards
+        // send remain cards to player
+        // broadcast the player online
+        Ok(HandleResult::default())
+    }
+
+    /// when player offline, tell other players, then do some change in game UI
+    async fn offline(&mut self, player: PeerId) -> -> Result<HandleResult<Self::Param>> {
+        // broadcast the player offline
+        Ok(HandleResult::default())
     }
 
     async fn handle(
