@@ -4,8 +4,8 @@ use ark_ec::{AffineRepr, CurveGroup};
 use ark_ed_on_bn254::EdwardsProjective;
 use ark_ff::UniformRand;
 use ark_std::rand::{CryptoRng, RngCore};
-use plonk::utils::serialization::{ark_deserialize, ark_serialize};
 use serde::{Deserialize, Serialize};
+use zplonk::utils::serialization::{ark_deserialize, ark_serialize};
 use zshuffle::Ciphertext;
 
 pub mod cards;

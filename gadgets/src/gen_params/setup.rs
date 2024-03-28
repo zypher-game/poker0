@@ -3,10 +3,6 @@
 #![cfg_attr(any(feature = "no_srs", feature = "no_vk"), allow(unused))]
 
 use ark_bn254::G1Projective;
-use plonk::{
-    poly_commit::kzg_poly_commitment::KZGCommitmentSchemeBN254,
-    turboplonk::constraint_system::ConstraintSystem,
-};
 use poker_core::mock_data::task::mock_task;
 use poker_gadgets::{
     build_cs::{build_cs, N_CARDS, N_PLAYS},
@@ -15,6 +11,10 @@ use poker_gadgets::{
 };
 use std::path::PathBuf;
 use structopt::StructOpt;
+use zplonk::{
+    poly_commit::kzg_poly_commitment::KZGCommitmentSchemeBN254,
+    turboplonk::constraint_system::ConstraintSystem,
+};
 
 #[derive(StructOpt, Debug)]
 #[structopt(

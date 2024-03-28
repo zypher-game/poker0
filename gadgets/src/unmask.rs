@@ -1,8 +1,8 @@
 use ark_bn254::Fr;
 use ark_ed_on_bn254::EdwardsProjective;
-use plonk::turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS};
 use poker_core::cards::{CryptoCard, RevealCard};
 use std::ops::Neg;
+use zplonk::turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS};
 
 #[derive(Default, Clone)]
 pub struct UnmaskOutsource {
@@ -86,8 +86,8 @@ mod test {
         public_keys::PublicKeyOutsource, reveals::RevealOutsource, unmask::UnmaskOutsource,
     };
     use ark_bn254::Fr;
-    use plonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
     use poker_core::mock_data::task::mock_task;
+    use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
 
     #[test]
     fn test_unmask_constraint_system() {

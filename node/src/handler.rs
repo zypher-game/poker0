@@ -227,7 +227,7 @@ impl Handler for PokerHandler {
     }
 
     /// when player offline, tell other players, then do some change in game UI
-    async fn offline(&mut self, player: PeerId) -> -> Result<HandleResult<Self::Param>> {
+    async fn offline(&mut self, player: PeerId) -> Result<HandleResult<Self::Param>> {
         // broadcast the player offline
         Ok(HandleResult::default())
     }

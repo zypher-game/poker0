@@ -6,11 +6,11 @@ use ark_ed_on_bn254::EdwardsProjective;
 use ark_ff::{BigInteger, Field, PrimeField};
 use num_bigint::BigUint;
 use num_integer::Integer;
-use plonk::{
+use poker_core::schnorr::{PublicKey, Signature};
+use zplonk::{
     anemoi::{AnemoiJive, AnemoiJive254},
     turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS, VarIndex},
 };
-use poker_core::schnorr::{PublicKey, Signature};
 
 use crate::get_divisor;
 
@@ -113,8 +113,8 @@ mod test {
     use super::SignatureOutsource;
     use crate::public_keys::PublicKeyOutsource;
     use ark_bn254::Fr;
-    use plonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
     use poker_core::mock_data::task::mock_task;
+    use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
 
     #[test]
     fn test_signature_constraint_system() {

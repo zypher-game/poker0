@@ -4,7 +4,6 @@ members = [
   "host",
   "methods",
   "bonsai",
-  "plonk",
   "gadgets",
   "wasm",
   "node"
@@ -16,7 +15,6 @@ poker-methods = { path = "methods" }
 poker-core = { path = "core" }
 poker-bonsai = { path = "bonsai" }
 poker-gadgets = { path = "gadgets" }
-plonk = { path = "plonk" }
 risc0-zkvm = { version = "0.20.1", default-features = false }
 risc0-build = { version = "0.20.1" }
 bonsai-sdk = "0.6.1"
@@ -28,6 +26,7 @@ ark-ed-on-bn254 = "0.4"
 ark-std = "0.4"
 ark-serialize = { version = "0.4", default-features = false, features = ["derive"] }
 zshuffle = { version = "0.1" }
+zplonk = { version = "0.1" }
 
 [patch.crates-io]
 ark-ff = { git = "https://github.com/arkworks-rs/algebra" }

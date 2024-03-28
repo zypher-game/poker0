@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 poker-methods = { workspace = true }
-poker-core = { workspace = true, features= ["serialize0", "deserialize0"]}
+poker-core = { workspace = true, features = ["serialize0", "deserialize0"]}
 risc0-zkvm = { workspace = true }
 bonsai-sdk = { workspace = true }
 bytemuck = "1.14"

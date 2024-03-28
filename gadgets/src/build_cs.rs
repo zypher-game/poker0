@@ -1,17 +1,18 @@
 use ark_bn254::Fr;
 use ark_ec::CurveGroup;
 use ark_ff::PrimeField;
-use plonk::{
+use poker_core::schnorr::PublicKey;
+use rand_chacha::rand_core::{CryptoRng, RngCore};
+use zplonk::{
     anemoi::AnemoiJive254,
     errors::Result,
-    poly_commit::{kzg_poly_commitment::KZGCommitmentSchemeBN254, transcript::Transcript},
+    poly_commit::kzg_poly_commitment::KZGCommitmentSchemeBN254,
     turboplonk::{
         constraint_system::turbo::TurboCS, indexer::PlonkProof, prover::prover_with_lagrange,
         verifier::verifier,
     },
+    utils::transcript::Transcript,
 };
-use poker_core::schnorr::PublicKey;
-use rand_chacha::rand_core::{CryptoRng, RngCore};
 
 use crate::{
     gen_params::params::{ProverParams, VerifierParams},

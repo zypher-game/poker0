@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 risc0-zkvm = { version = "0.20.1", default-features = false, features = [ "std" ] }
-poker-core = { path = "../../core", features= ["serialize0","deserialize0"]}
+poker-core = { path = "../../core", features= ["serialize0", "deserialize0"]}
 ark-serialize = { version = "0.4", default-features = false, features = ["derive"] }
 ahash = { version = "=0.8.6", default-features = false, features = ["compile-time-rng"] }
 
@@ -20,3 +20,4 @@ ark-bn254 = { git = "https://github.com/arkworks-rs/algebra" }
 ark-ed-on-bn254 = { git = "https://github.com/arkworks-rs/algebra" }
 ark-groth16 = { git = "https://github.com/arkworks-rs/groth16" }
 zshuffle = { git = "https://github.com/zypher-game/uzkge", branch = "test" }
+zplonk = { git = "https://github.com/zypher-game/uzkge", branch = "test" }

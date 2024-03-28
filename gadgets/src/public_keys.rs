@@ -1,6 +1,6 @@
 use ark_bn254::Fr;
-use plonk::turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS};
 use poker_core::schnorr::PublicKey;
+use zplonk::turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS};
 
 pub struct PublicKeyOutsource {
     pub public_keys: Vec<PublicKey>,
@@ -32,8 +32,8 @@ impl PublicKeyOutsource {
 mod test {
     use crate::public_keys::PublicKeyOutsource;
     use ark_bn254::Fr;
-    use plonk::turboplonk::constraint_system::turbo::TurboCS;
     use poker_core::mock_data::task::mock_task;
+    use zplonk::turboplonk::constraint_system::turbo::TurboCS;
 
     #[test]
     fn test_reveals_constraint_system() {

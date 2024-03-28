@@ -362,17 +362,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "displaydoc"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "487585f4d0c6655fe74905e2504d8ad6908e4db67f744eb140876906c2f3175d"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.52",
-]
-
-[[package]]
 name = "downcast-rs"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -534,28 +523,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8afb450f006bf6385ca15ef45d71d2288452bc3683ce2e2cacc0d18e4be60b58"
 
 [[package]]
-name = "plonk"
-version = "0.1.0"
-dependencies = [
- "ark-bn254",
- "ark-ec",
- "ark-ed-on-bn254",
- "ark-ff",
- "ark-poly",
- "ark-serialize",
- "ark-std",
- "displaydoc",
- "itertools",
- "lazy_static",
- "num-bigint",
- "num-integer",
- "rand_chacha",
- "serde",
- "serde_derive",
- "sha3",
-]
-
-[[package]]
 name = "poker-core"
 version = "0.1.0"
 dependencies = [
@@ -567,10 +534,10 @@ dependencies = [
  "ark-std",
  "hashbrown",
  "lazy_static",
- "plonk",
  "rand_chacha",
  "serde",
  "serde_json",
+ "zplonk",
  "zshuffle",
 ]
 

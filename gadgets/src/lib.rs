@@ -2,10 +2,6 @@ use ark_bn254::{Fr, G1Affine};
 use ark_ec::AffineRepr;
 use ark_ff::{BigInteger, Field, PrimeField};
 use num_bigint::BigUint;
-use plonk::{
-    poly_commit::{field_polynomial::FpPolynomial, kzg_poly_commitment::KZGCommitmentSchemeBN254},
-    turboplonk::indexer::{PlonkProof, PlonkVerifierParams},
-};
 use poker_core::{play::PlayAction, schnorr::PublicKey, task::Task};
 use reveals::RevealOutsource;
 use std::{
@@ -14,6 +10,10 @@ use std::{
     path::Path,
 };
 use unmask::UnmaskOutsource;
+use zplonk::{
+    poly_commit::{field_polynomial::FpPolynomial, kzg_poly_commitment::KZGCommitmentSchemeBN254},
+    turboplonk::indexer::{PlonkProof, PlonkVerifierParams},
+};
 
 use crate::signatures::SignatureOutsource;
 

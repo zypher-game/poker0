@@ -6,11 +6,11 @@ use ark_ed_on_bn254::EdwardsProjective;
 use ark_ff::{BigInteger, Field, PrimeField};
 use num_bigint::BigUint;
 use num_integer::Integer;
-use plonk::{
+use poker_core::cards::{CryptoCard, RevealCard};
+use zplonk::{
     anemoi::{AnemoiJive, AnemoiJive254},
     turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS},
 };
-use poker_core::cards::{CryptoCard, RevealCard};
 use zshuffle::RevealProof;
 
 use crate::get_divisor;
@@ -184,8 +184,8 @@ mod test {
     use super::RevealOutsource;
     use crate::public_keys::PublicKeyOutsource;
     use ark_bn254::Fr;
-    use plonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
     use poker_core::mock_data::task::mock_task;
+    use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
 
     #[test]
     fn test_reveals_constraint_system() {
