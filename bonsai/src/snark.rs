@@ -50,44 +50,9 @@ mod test {
     };
     use poker_methods::POKER_METHOD_ID;
     use risc0_zkvm::{
-        serde::{from_slice, to_vec},
-        sha::{Digest, Digestible},
-        Groth16Proof, Groth16Receipt, Groth16Seal, InnerReceipt, Journal, Receipt,
-        ALLOWED_IDS_ROOT,
+        serde::{from_slice, to_vec}, sha::{Digest, Digestible}, CompactReceipt, Groth16Seal, InnerReceipt, Journal, Receipt, ALLOWED_IDS_ROOT
     };
     use std::{str::FromStr, time::Instant};
-
-    fn fr_from_bytes(scalar: &[u8]) -> Fr {
-        let scalar: Vec<u8> = scalar.iter().rev().cloned().collect();
-        Fr::deserialize_uncompressed(&*scalar).unwrap()
-    }
-
-    fn to_fixed_array(input: Vec<u8>) -> [u8; 32] {
-        let mut fixed_array = [0u8; 32];
-        let start = core::cmp::max(32, input.len()) - core::cmp::min(32, input.len());
-        fixed_array[start..].copy_from_slice(&input[input.len().saturating_sub(32)..]);
-        fixed_array
-    }
-
-    fn from_u256(value: &str) -> Vec<u8> {
-        let value = if let Some(stripped) = value.strip_prefix("0x") {
-            to_fixed_array(hex::decode(stripped).unwrap()).to_vec()
-        } else {
-            to_fixed_array(BigInt::from_str(value).unwrap().to_bytes_be().1).to_vec()
-        };
-
-        value
-    }
-
-    fn split_digest(d: Digest) -> (Fr, Fr) {
-        let big_endian: Vec<u8> = d.as_bytes().to_vec().iter().rev().cloned().collect();
-        let middle = big_endian.len() / 2;
-        let (a, b) = big_endian.split_at(middle);
-        (
-            fr_from_bytes(&from_u256(&format!("0x{}", hex::encode(a)))),
-            fr_from_bytes(&from_u256(&format!("0x{}", hex::encode(b)))),
-        )
-    }
 
     #[test]
     fn stark_to_snark_test() {
@@ -107,51 +72,21 @@ mod test {
         assert_eq!(commit.winner, 2);
 
         let start = Instant::now();
-        let snark_proof = stark_to_snark(session_id).unwrap();
+        let snark_proof: bonsai_sdk::alpha::responses::SnarkReceipt = stark_to_snark(session_id).unwrap();
         println!("Stark2Snark time: {:.2?}", start.elapsed());
 
-        let receipt_claim = receipt.get_claim().unwrap();
-
         {
-            let (c1, c2) = split_digest(Digest::from_hex(ALLOWED_IDS_ROOT).unwrap());
-            let (m1, m2) = split_digest(receipt_claim.digest());
+            let receipt_claim = receipt.get_claim().unwrap();
+            let receipt = Receipt::new(
+                InnerReceipt::Compact(CompactReceipt {
+                    seal: snark_proof.snark.to_vec(),
+                    claim: receipt_claim.clone(),
+                }),
+                receipt.journal.bytes,
+            );
 
-            assert_eq!(c2.into_bigint().to_bytes_be(), snark_proof.snark.public[0]);
-            assert_eq!(c1.into_bigint().to_bytes_be(), snark_proof.snark.public[1]);
-            assert_eq!(m2.into_bigint().to_bytes_be(), snark_proof.snark.public[2]);
-            assert_eq!(m1.into_bigint().to_bytes_be(), snark_proof.snark.public[3]);
+            assert!(receipt.verify(POKER_METHOD_ID).is_ok());
         }
-
-        // {
-        //     let groth16_seal = Groth16Seal {
-        //         a: snark_proof.snark.a.clone(),
-        //         b: snark_proof.snark.b.clone(),
-        //         c: snark_proof.snark.c.clone(),
-        //     };
-
-        //     let receipt = Receipt::new(
-        //         InnerReceipt::Groth16(Groth16Receipt {
-        //             seal: groth16_seal.to_vec(),
-        //             claim: receipt_claim.clone(),
-        //         }),
-        //         receipt.journal.bytes,
-        //     );
-
-        //     assert!(receipt.verify(POKER_METHOD_ID).is_ok());
-        // }
-
-        // {
-        //     let groth16_seal = Groth16Seal {
-        //         a: snark_proof.snark.a,
-        //         b: snark_proof.snark.b,
-        //         c: snark_proof.snark.c,
-        //     };
-
-        //     let groth16_proof =
-        //         Groth16Proof::from_seal(&groth16_seal, receipt_claim.digest()).unwrap();
-
-        //     assert!(groth16_proof.verify().is_ok())
-        // }
     }
 
     #[test]
@@ -180,15 +115,10 @@ mod test {
 
         let receipt_claim = receipt.get_claim().unwrap();
 
-        let groth16_seal = Groth16Seal {
-            a: snark_proof.snark.a,
-            b: snark_proof.snark.b,
-            c: snark_proof.snark.c,
-        };
         let image_id: Digest = POKER_METHOD_ID.into();
 
         println!("---------on-chain verification data---------");
-        println!("seal:0x{}", hex::encode(groth16_seal.to_vec()));
+        println!("seal:0x{}", hex::encode(snark_proof.snark.to_vec()));
         println!("image_id:0x{}", image_id);
         println!("post_digest:0x{}", receipt_claim.post.digest());
         println!("jounral:0x{}", receipt.journal.digest());

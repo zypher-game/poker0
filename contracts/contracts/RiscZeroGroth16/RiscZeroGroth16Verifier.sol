@@ -5,7 +5,16 @@ import {SafeCast} from "../openzeppelin/SafeCast.sol";
 
 import {ControlID} from "./ControlID.sol";
 import {Groth16Verifier} from "./Groth16Verifier.sol";
-import {ExitCode, IRiscZeroVerifier, Output, OutputLib, Receipt, ReceiptClaim, ReceiptClaimLib, SystemExitCode} from "./IRiscZeroVerifier.sol";
+import {
+    ExitCode,
+    IRiscZeroVerifier,
+    Output,
+    OutputLib,
+    Receipt,
+    ReceiptClaim,
+    ReceiptClaimLib,
+    SystemExitCode
+} from "./IRiscZeroVerifier.sol";
 
 /// @notice reverse the byte order of the uint256 value.
 /// @dev Soldity uses a big-endian ABI encoding. Reversing the byte order before encoding
@@ -15,24 +24,20 @@ function reverseByteOrderUint256(uint256 input) pure returns (uint256 v) {
     v = input;
 
     // swap bytes
-    v =
-        ((v & 0xFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00) >> 8) |
-        ((v & 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF) << 8);
+    v = ((v & 0xFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00) >> 8)
+        | ((v & 0x00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF) << 8);
 
     // swap 2-byte long pairs
-    v =
-        ((v & 0xFFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000) >> 16) |
-        ((v & 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF) << 16);
+    v = ((v & 0xFFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000) >> 16)
+        | ((v & 0x0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF) << 16);
 
     // swap 4-byte long pairs
-    v =
-        ((v & 0xFFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000) >> 32) |
-        ((v & 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF) << 32);
+    v = ((v & 0xFFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000) >> 32)
+        | ((v & 0x00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF00000000FFFFFFFF) << 32);
 
     // swap 8-byte long pairs
-    v =
-        ((v & 0xFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF0000000000000000) >> 64) |
-        ((v & 0x0000000000000000FFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF) << 64);
+    v = ((v & 0xFFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF0000000000000000) >> 64)
+        | ((v & 0x0000000000000000FFFFFFFFFFFFFFFF0000000000000000FFFFFFFFFFFFFFFF) << 64);
 
     // swap 16-byte long pairs
     v = (v >> 128) | (v << 128);
@@ -90,12 +95,11 @@ contract RiscZeroGroth16Verifier is IRiscZeroVerifier, Groth16Verifier {
     }
 
     /// @inheritdoc IRiscZeroVerifier
-    function verify(
-        bytes calldata seal,
-        bytes32 imageId,
-        bytes32 postStateDigest,
-        bytes32 journalDigest
-    ) public view returns (bool) {
+    function verify(bytes calldata seal, bytes32 imageId, bytes32 postStateDigest, bytes32 journalDigest)
+        public
+        view
+        returns (bool)
+    {
         Receipt memory receipt = Receipt(
             seal,
             ReceiptClaim(
