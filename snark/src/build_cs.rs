@@ -16,10 +16,7 @@ use zplonk::{
 
 use crate::{
     gen_params::params::{ProverParams, VerifierParams},
-    public_keys::PublicKeyOutsource,
-    reveals::RevealOutsource,
-    signatures::SignatureOutsource,
-    unmask::UnmaskOutsource,
+    gadgets::{reveals::RevealOutsource,signatures::SignatureOutsource,unmask::UnmaskOutsource,public_keys::PublicKeyOutsource}
 };
 
 pub type Proof = PlonkProof<KZGCommitmentSchemeBN254>;

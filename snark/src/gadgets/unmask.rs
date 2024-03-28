@@ -82,7 +82,7 @@ impl UnmaskOutsource {
 
 #[cfg(test)]
 mod test {
-    use crate::{
+    use crate::gadgets::{
         public_keys::PublicKeyOutsource, reveals::RevealOutsource, unmask::UnmaskOutsource,
     };
     use ark_bn254::Fr;

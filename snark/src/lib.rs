@@ -3,26 +3,22 @@ use ark_ec::AffineRepr;
 use ark_ff::{BigInteger, Field, PrimeField};
 use num_bigint::BigUint;
 use poker_core::{play::PlayAction, schnorr::PublicKey, task::Task};
-use reveals::RevealOutsource;
+use gadgets::{reveals::RevealOutsource,signatures::SignatureOutsource,unmask::UnmaskOutsource};
 use std::{
     fs::{self, File},
     io::Write,
     path::Path,
 };
-use unmask::UnmaskOutsource;
+
 use zplonk::{
     poly_commit::{field_polynomial::FpPolynomial, kzg_poly_commitment::KZGCommitmentSchemeBN254},
     turboplonk::indexer::{PlonkProof, PlonkVerifierParams},
 };
 
-use crate::signatures::SignatureOutsource;
-
 pub mod build_cs;
 pub mod gen_params;
-pub mod public_keys;
-pub mod reveals;
-pub mod signatures;
-pub mod unmask;
+
+pub mod gadgets;
 
 #[cfg(test)]
 pub mod test;

@@ -4,7 +4,7 @@ members = [
   "host",
   "methods",
   "bonsai",
-  "gadgets",
+  "snark",
   "wasm",
   "node"
 ]
@@ -14,7 +14,7 @@ resolver = "2"
 poker-methods = { path = "methods" }
 poker-core = { path = "core" }
 poker-bonsai = { path = "bonsai" }
-poker-gadgets = { path = "gadgets" }
+poker-snark = { path = "snark" }
 risc0-zkvm = { version = "0.20.1", default-features = false }
 risc0-build = { version = "0.20.1" }
 bonsai-sdk = "0.6.1"

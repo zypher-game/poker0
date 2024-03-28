@@ -9,7 +9,7 @@ use poker_core::{
     task::Task as CoreTask,
     CiphertextAffine,
 };
-use poker_gadgets::{
+use poker_snark::{
     build_cs::{prove_outsource, N_CARDS, N_PLAYS},
     create_and_rescale_outsource,
     gen_params::PROVER_PARAMS,

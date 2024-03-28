@@ -4,7 +4,7 @@
 
 use ark_bn254::G1Projective;
 use poker_core::mock_data::task::mock_task;
-use poker_gadgets::{
+use poker_snark::{
     build_cs::{build_cs, N_CARDS, N_PLAYS},
     create_and_rescale_outsource,
     gen_params::{params::VerifierParams, SRS},

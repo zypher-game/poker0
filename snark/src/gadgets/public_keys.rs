@@ -30,10 +30,11 @@ impl PublicKeyOutsource {
 
 #[cfg(test)]
 mod test {
-    use crate::public_keys::PublicKeyOutsource;
     use ark_bn254::Fr;
     use poker_core::mock_data::task::mock_task;
     use zplonk::turboplonk::constraint_system::turbo::TurboCS;
+
+    use super::PublicKeyOutsource;
 
     #[test]
     fn test_reveals_constraint_system() {

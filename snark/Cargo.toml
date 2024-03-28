@@ -1,5 +1,5 @@
 [package]
-name = "poker-gadgets"
+name = "poker-snark"
 version = "0.1.0"
 edition = "2021"
 
