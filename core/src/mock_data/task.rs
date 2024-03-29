@@ -542,29 +542,29 @@ pub fn mock_task() -> Task {
     ];
 
     //  ---------------round 4--------------------
-    let bob_play_4_0 = PlayerEnvBuilder::new()
-        .room_id(1)
-        .round_id(4)
-        .turn_id(0)
-        .action(PlayAction::PLAY)
-        .play_cards(Some(CryptoCardCombination::FourWithTwoSingle(
-            CryptoCard(bob_deck[3].into()),
-            CryptoCard(bob_deck[13].into()),
-            CryptoCard(bob_deck[14].into()),
-            CryptoCard(bob_deck[11].into()),
-            CryptoCard(bob_deck[4].into()),
-            CryptoCard(bob_deck[7].into()),
-        )))
-        .reveals(&[
-            reveal_proofs.get(&bob_deck[3]).unwrap().clone(),
-            reveal_proofs.get(&bob_deck[13]).unwrap().clone(),
-            reveal_proofs.get(&bob_deck[14]).unwrap().clone(),
-            reveal_proofs.get(&bob_deck[11]).unwrap().clone(),
-            reveal_proofs.get(&bob_deck[4]).unwrap().clone(),
-            reveal_proofs.get(&bob_deck[7]).unwrap().clone(),
-        ])
-        .build_and_sign(&bob, &mut rng)
-        .unwrap();
+    // let bob_play_4_0 = PlayerEnvBuilder::new()
+    //     .room_id(1)
+    //     .round_id(4)
+    //     .turn_id(0)
+    //     .action(PlayAction::PLAY)
+    //     .play_cards(Some(CryptoCardCombination::FourWithTwoSingle(
+    //         CryptoCard(bob_deck[3].into()),
+    //         CryptoCard(bob_deck[13].into()),
+    //         CryptoCard(bob_deck[14].into()),
+    //         CryptoCard(bob_deck[11].into()),
+    //         CryptoCard(bob_deck[4].into()),
+    //         CryptoCard(bob_deck[7].into()),
+    //     )))
+    //     .reveals(&[
+    //         reveal_proofs.get(&bob_deck[3]).unwrap().clone(),
+    //         reveal_proofs.get(&bob_deck[13]).unwrap().clone(),
+    //         reveal_proofs.get(&bob_deck[14]).unwrap().clone(),
+    //         reveal_proofs.get(&bob_deck[11]).unwrap().clone(),
+    //         reveal_proofs.get(&bob_deck[4]).unwrap().clone(),
+    //         reveal_proofs.get(&bob_deck[7]).unwrap().clone(),
+    //     ])
+    //     .build_and_sign(&bob, &mut rng)
+    //     .unwrap();
 
     let charlie_play_4_0 = PlayerEnvBuilder::new()
         .room_id(1)
@@ -582,7 +582,8 @@ pub fn mock_task() -> Task {
         .build_and_sign(&alice, &mut rng)
         .unwrap();
 
-    let round_4 = vec![bob_play_4_0, charlie_play_4_0, alice_play_4_0];
+    // let round_4 = vec![bob_play_4_0, charlie_play_4_0, alice_play_4_0];
+    let round_4 = vec![charlie_play_4_0, alice_play_4_0];
 
     //  ---------------round 5--------------------
 

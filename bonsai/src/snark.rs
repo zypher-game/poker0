@@ -50,7 +50,9 @@ mod test {
     };
     use poker_methods::POKER_METHOD_ID;
     use risc0_zkvm::{
-        serde::{from_slice, to_vec}, sha::{Digest, Digestible}, CompactReceipt, Groth16Seal, InnerReceipt, Journal, Receipt, ALLOWED_IDS_ROOT
+        serde::{from_slice, to_vec},
+        sha::{Digest, Digestible},
+        CompactReceipt, Groth16Seal, InnerReceipt, Journal, Receipt, ALLOWED_IDS_ROOT,
     };
     use std::{str::FromStr, time::Instant};
 
@@ -72,7 +74,7 @@ mod test {
         assert_eq!(commit.winner, 2);
 
         let start = Instant::now();
-        let snark_proof: bonsai_sdk::alpha::responses::SnarkReceipt = stark_to_snark(session_id).unwrap();
+        let snark_proof = stark_to_snark(session_id).unwrap();
         println!("Stark2Snark time: {:.2?}", start.elapsed());
 
         {

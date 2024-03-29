@@ -19,6 +19,7 @@ pub const MAX_PLAYER_HAND_LEN: usize = 18;
 pub enum PlayAction {
     PAAS,
     PLAY,
+    OFFLINE,
 }
 
 impl From<PlayAction> for u8 {
@@ -26,6 +27,7 @@ impl From<PlayAction> for u8 {
         match val {
             PlayAction::PAAS => 0,
             PlayAction::PLAY => 1,
+            PlayAction::OFFLINE => 2,
         }
     }
 }
@@ -138,13 +140,12 @@ impl PlayerEnv {
             .clone()
             .ok_or(PokerError::NoCardError)?
             .to_vec();
-        // let vec = cards.to_vec();
         assert_eq!(cards.len(), self.reveals.len());
 
-        let mut unmasked_cards = Vec::new();
+        let mut unmasked_cards = Vec::with_capacity(cards.len());
 
         for (reveals, card) in self.reveals.iter().zip(cards.iter()) {
-            let mut reveal_cards = Vec::new();
+            let mut reveal_cards = Vec::with_capacity(reveals.len());
             for reveal in reveals.iter() {
                 verify_reveal0(
                     &reveal.2.get_raw(),
@@ -224,27 +225,20 @@ impl PlayerEnvBuilder {
         self
     }
 
-    pub fn validate_rules(&self) -> Result<()> {
+    pub fn sanity_check(&self) -> Result<()> {
         match self.inner.action {
-            PlayAction::PAAS => {
-                if !self.inner.reveals.is_empty() || self.inner.play_crypto_cards.is_some() {
-                    Err(PokerError::BuildPlayEnvParamsError)
-                } else {
-                    Ok(())
-                }
-            }
             PlayAction::PLAY => {
                 if let Some(c) = &self.inner.play_crypto_cards {
-                    // todo check  self.inner.others_reveal.len = participant
                     if self.inner.reveals.len() != c.len() {
-                        Err(PokerError::BuildPlayEnvParamsError)
-                    } else {
-                        Ok(())
+                        return Err(PokerError::BuildPlayEnvParamsError);
                     }
+
+                    Ok(())
                 } else {
                     Err(PokerError::BuildPlayEnvParamsError)
                 }
             }
+            _ => Ok(()),
         }
     }
 
@@ -253,7 +247,7 @@ impl PlayerEnvBuilder {
         key: &KeyPair,
         prng: &mut R,
     ) -> Result<PlayerEnv> {
-        self.validate_rules()?;
+        self.sanity_check()?;
 
         if self.inner.action == PlayAction::PLAY {
             let reveals = self.inner.verify_and_get_reveals().unwrap();
@@ -268,9 +262,7 @@ impl PlayerEnvBuilder {
         }
 
         let msg = self.inner.pack();
-        let s = key.sign(&msg, prng)?;
-
-        self.inner.signature = s;
+        self.inner.signature = key.sign(&msg, prng)?;
 
         Ok(self.inner)
     }
