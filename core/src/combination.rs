@@ -204,7 +204,7 @@ impl PartialOrd for ClassicCardCombination {
 
 impl ClassicCardCombination {
     #[inline]
-    pub fn validate_rules(&self) -> bool {
+    pub fn check_format(&self) -> bool {
         match self {
             DefaultCombination => false,
 
@@ -225,8 +225,8 @@ impl ClassicCardCombination {
             }
 
             ThreeWithPair(x1, x2, x3, y1, y2) => {
-                let condition1 = Three(*x1, *x2, *x3).validate_rules();
-                let condition2 = Pair(*y1, *y2).validate_rules();
+                let condition1 = Three(*x1, *x2, *x3).check_format();
+                let condition2 = Pair(*y1, *y2).check_format();
 
                 condition1 && condition2
             }
@@ -235,25 +235,18 @@ impl ClassicCardCombination {
                 if x.len() < 5 {
                     return false;
                 }
-                let last_card = x.last().unwrap();
-                if last_card.weight() > Value::Ace.weight() {
-                    return false;
-                }
-
                 x.windows(2).all(|x| x[1].weight() == x[0].weight() + 1)
             }
 
             ConnectedPairs(x) => {
-                let condition1 = x.iter().all(|(t1, t2)| t1.get_value() == t2.get_value());
-
-                let stright = x.iter().map(|x| x.0).collect::<Vec<_>>();
-                if stright.len() < 3 {
+                if x.len() < 3 {
                     return false;
                 }
 
-                let condition2 = stright
-                    .windows(2)
-                    .all(|y| y[1].weight() == y[0].weight() + 1);
+                let condition1 = x.windows(2)
+                    .all(|y| y[0].0.get_value() == y[0].1.get_value() && y[1].0.weight() == y[0].1.weight() + 1);
+
+                let condition2 = x.last().and_then(|x| Some(x.0.get_value() == x.1.get_value())).unwrap();
 
                 condition1 && condition2
             }
