@@ -8,7 +8,7 @@ use zplonk::utils::serialization::{ark_deserialize, ark_serialize};
 
 use crate::CiphertextAffineRepr;
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Suite {
     Club,
     Diamond,
@@ -48,7 +48,6 @@ pub enum Value {
 
 impl Value {
     pub const VALUES: [Value; 13] = [
-        Value::Two,
         Value::Three,
         Value::Four,
         Value::Five,
@@ -61,6 +60,7 @@ impl Value {
         Value::Queen,
         Value::King,
         Value::Ace,
+        Value::Two,
     ];
 
     pub fn weight(&self) -> u8 {
@@ -77,7 +77,7 @@ impl Value {
             Value::Queen => 12,
             Value::King => 13,
             Value::Ace => 14,
-            Value::Two => 15,
+            Value::Two => 20, // on purpose
         }
     }
 
@@ -107,7 +107,7 @@ impl PartialOrd for Value {
     }
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ClassicCard {
     value: Value,
     suite: Suite,
@@ -571,38 +571,6 @@ lazy_static! {
                     "10639437100116784414849112948670820976502503848836580728911458252003366472114"
                 ),
             ),
-            (
-                MontFp!(
-                    "7463345176938377335743855621250717935478832392628075996990518010998845867608"
-                ),
-                MontFp!(
-                    "6591311841833654037338600395894662244021629812630549070185551952458501802577"
-                ),
-            ),
-            (
-                MontFp!(
-                    "19345227662140443910112091815045108425208563651852531299552890509849971476254"
-                ),
-                MontFp!(
-                    "6031746573490953589824731942924772519342397266535472015180514367896598541710"
-                ),
-            ),
-            (
-                MontFp!(
-                    "10381048103539153508124088576217185918414979340872424158148906659051441320312"
-                ),
-                MontFp!(
-                    "3325027942260040218729282709432422687245499137217707603232564370327089864513"
-                ),
-            ),
-            (
-                MontFp!(
-                    "3569845989532963415952637253218944951525900178487746478046730230385447479117"
-                ),
-                MontFp!(
-                    "17072583757440516655375508901221573269874624709516079107295928819149982309195"
-                ),
-            ),
         ];
 
         let encoding_card = point
@@ -614,10 +582,28 @@ lazy_static! {
 
         let mut i = 0;
         for value in Value::VALUES.iter() {
-            for suite in Suite::SUITES.iter() {
-                let classic_card = ClassicCard::new(*value, *suite);
-                map.insert(encoding_card[i], classic_card);
-                i += 1;
+            match value {
+                Value::Ace => {
+                    for suite in Suite::SUITES.iter().skip(1) {
+                        let classic_card = ClassicCard::new(*value, *suite);
+                        map.insert(encoding_card[i], classic_card);
+                        i += 1;
+                    }
+                }
+
+                Value::Two => {
+                    let classic_card = ClassicCard::new(*value, Suite::Heart);
+                    map.insert(encoding_card[i], classic_card);
+                    i += 1;
+                }
+
+                _ => {
+                    for suite in Suite::SUITES.iter() {
+                        let classic_card = ClassicCard::new(*value, *suite);
+                        map.insert(encoding_card[i], classic_card);
+                        i += 1;
+                    }
+                }
             }
         }
 

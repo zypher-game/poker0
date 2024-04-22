@@ -243,10 +243,15 @@ impl ClassicCardCombination {
                     return false;
                 }
 
-                let condition1 = x.windows(2)
-                    .all(|y| y[0].0.get_value() == y[0].1.get_value() && y[1].0.weight() == y[0].1.weight() + 1);
+                let condition1 = x.windows(2).all(|y| {
+                    y[0].0.get_value() == y[0].1.get_value()
+                        && y[1].0.weight() == y[0].1.weight() + 1
+                });
 
-                let condition2 = x.last().and_then(|x| Some(x.0.get_value() == x.1.get_value())).unwrap();
+                let condition2 = x
+                    .last()
+                    .and_then(|x| Some(x.0.get_value() == x.1.get_value()))
+                    .unwrap();
 
                 condition1 && condition2
             }
@@ -268,6 +273,43 @@ impl ClassicCardCombination {
                     && x2.get_value() == Value::Ace
                     && x3.get_value() == Value::Ace
             }
+        }
+    }
+
+    pub fn contains(&self, other: &ClassicCard) -> bool {
+        match self {
+            DefaultCombination => false,
+
+            Single(x) => x == other,
+
+            Pair(x1, x2) => x1 == other || x2 == other,
+
+            Three(x1, x2, x3) => x1 == other || x2 == other || x3 == other,
+
+            ThreeWithOne(x1, x2, x3, x4) => {
+                x1 == other || x2 == other || x3 == other || x4 == other
+            }
+
+            ThreeWithPair(x1, x2, x3, y1, y2) => {
+                x1 == other || x2 == other || x3 == other || y1 == other || y2 == other
+            }
+
+            Straight(x) => x.iter().any(|x| x == other),
+
+            ConnectedPairs(x) => x.iter().any(|(x1, x2)| x1 == other || x2 == other),
+
+            FourWithTwo(x1, x2, x3, x4, x5, x6) => {
+                x1 == other
+                    || x2 == other
+                    || x3 == other
+                    || x4 == other
+                    || x5 == other
+                    || x6 == other
+            }
+
+            Bomb(x1, x2, x3, x4) => x1 == other || x2 == other || x3 == other || x4 == other,
+
+            AAA(_, _, _) => false,
         }
     }
 
