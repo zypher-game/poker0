@@ -4,6 +4,9 @@ use crate::play::{PlayAction, PlayerEnv, PlayerEnv0};
 use crate::{cards::CryptoCard, schnorr::PublicKey};
 use serde::{Deserialize, Serialize};
 
+pub const N_PLAYERS: usize = 3;
+pub const HAND_NUM: usize = 16;
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Task {
     pub room_id: usize,
@@ -17,8 +20,8 @@ pub struct Task {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TaskCommit {
     pub room_id: usize,
-    pub remaining_hand: Vec<usize>,
-    pub players_hand: Vec<Vec<CryptoCard>>,
+    // The indices stored in `play_cards` refer to the indices of the `crypto_cards` array.
+    pub play_cards: Vec<Vec<usize>>,
     pub crypto_cards: Vec<CryptoCard>,
     pub unmasked_cards: Vec<EncodingCard>,
 }
@@ -26,10 +29,9 @@ pub struct TaskCommit {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Task0 {
     pub room_id: usize,
-        // The first one to play.
-        pub first_player: usize,
+    // The first one to play.
+    pub first_player: usize,
     pub players_env: Vec<Vec<PlayerEnv0>>,
-    pub players_hand: Vec<Vec<CryptoCard>>,
 }
 
 impl Task {
@@ -42,28 +44,25 @@ impl Task {
 
         Task0 {
             room_id: self.room_id,
-            first_player : self.first_player,
+            first_player: self.first_player,
             players_env,
-            players_hand: self.players_hand.clone(),
         }
     }
 
     pub fn verify(&self) -> TaskCommit {
-        let mut input_hand = self.players_hand.clone();
-
         let Task {
             room_id,
             mut first_player,
             players_key,
             mut players_env,
-            players_hand,
+            ..
         } = self.clone();
 
-        let n_players = players_key.len();
         let n_rounds: usize = players_env.len();
         let mut is_first_play = true;
         let mut crypto_cards = vec![];
         let mut unmasked_cards = vec![];
+        let mut play_cards = vec![vec![]; N_PLAYERS];
 
         'outer: for (round_id, round_env) in players_env.iter_mut().enumerate() {
             let mut round_max_cards = ClassicCardCombination::default();
@@ -73,12 +72,12 @@ impl Task {
                 assert!(round_env
                     .iter()
                     .rev()
-                    .take(n_players - 1)
+                    .take(N_PLAYERS - 1)
                     .all(|x| x.action == PlayAction::PAAS));
             }
 
             for (i, player) in round_env.iter_mut().enumerate() {
-                let current = (first_player + i) % n_players;
+                let current = (first_player + i) % N_PLAYERS;
 
                 assert!(player
                     .verify_sign_with_params(
@@ -96,6 +95,7 @@ impl Task {
                         .as_ref()
                         .and_then(|x| Some(x.morph_to_encoding(&reveals)))
                         .unwrap();
+                    crypto_cards.extend(player.play_crypto_cards.take().unwrap().to_vec());
                     unmasked_cards.extend(encoding.to_vec());
                     let classic = encoding.morph_to_classic().unwrap();
                     assert!(classic.check_format());
@@ -107,16 +107,13 @@ impl Task {
                         is_first_play = false;
                     }
 
-                    let play_cards = player.play_crypto_cards.take().unwrap().to_vec();
-                    let hand = input_hand.get_mut(current).unwrap();
-                    assert!(play_cards.iter().all(|x| hand.contains(x)));
-                    hand.retain(|x| !play_cards.contains(x));
+                    let has_played = play_cards.get_mut(current).unwrap();
+                    has_played.extend(crypto_cards.len() - classic.len()..crypto_cards.len());
 
-                    if hand.len() == 0 {
+                    if has_played.len() == HAND_NUM {
                         break 'outer;
                     }
 
-                    crypto_cards.extend(play_cards);
                     round_max_cards = classic;
                     round_first_player = current;
                 }
@@ -125,12 +122,9 @@ impl Task {
             first_player = round_first_player;
         }
 
-        let remaining_hand: Vec<_> = input_hand.iter().map(|x| x.len()).collect();
-
         TaskCommit {
             room_id,
-            remaining_hand,
-            players_hand,
+            play_cards,
             crypto_cards,
             unmasked_cards,
         }
@@ -144,6 +138,13 @@ mod test {
     #[test]
     fn test_verify_task() {
         let commit = mock_task().verify();
-        assert_eq!(commit.remaining_hand, vec![2, 13, 0]);
+        assert_eq!(
+            commit
+                .play_cards
+                .iter()
+                .map(|x| x.len())
+                .collect::<Vec<_>>(),
+            vec![14, 3, 16]
+        );
     }
 }
