@@ -1,8 +1,6 @@
 use ark_serialize::CanonicalSerialize;
 use poker_core::{
-    combination::ClassicCardCombination,
-    play::PlayAction,
-    task::{Task0, TaskCommit},
+    cards::{ClassicCard, Suite, Value}, combination::ClassicCardCombination, play::PlayAction, task::{Task0, TaskCommit}
 };
 use risc0_zkvm::guest::env;
 
@@ -11,29 +9,29 @@ pub fn main() {
     // todo！
     // Utilizing array indexing to represent cards will reduce card serialization and minimize cycles.
     let task: Task0 = env::read();
-    println!("read cycle:{}", env::cycle_count() - cycle_0); 
+    println!("read cycle:{}", env::cycle_count() - cycle_0);
 
     let Task0 {
         room_id,
-        players_env,
+        mut first_player,
+        mut players_env,
         players_hand,
     } = task;
 
     let mut input_hand = players_hand.clone();
 
     let n_players = players_hand.len();
-    let n_round = players_env.len();
+    let n_rounds = players_env.len();
+    let mut is_first_play = true;
     let mut packs = vec![];
     let mut crypto_cards = vec![];
     let mut unmasked_cards = vec![];
-    let mut final_winner = 0;
-    let mut round_winner = 0;
 
-    for (round_id, round_env) in players_env.iter().enumerate() {
+    'outer: for (round_id, round_env) in players_env.iter_mut().enumerate() {
         let mut round_max_cards = ClassicCardCombination::default();
-        let mut current_winner = 0;
+        let mut round_first_player = 0;
 
-        if n_round - 1 != round_id {
+        if n_rounds - 1 != round_id {
             assert!(round_env
                 .iter()
                 .rev()
@@ -41,28 +39,34 @@ pub fn main() {
                 .all(|x| x.action == PlayAction::PAAS));
         }
 
-        for (i, player) in round_env.iter().enumerate() {
-            let current = (round_winner + i) % n_players;
+        for (i, player) in round_env.iter_mut().enumerate() {
+            let current = (first_player + i) % n_players;
 
             let action: u8 = player.action.into();
             let mut msg = vec![action, round_id as u8, i as u8];
             msg.extend(room_id.to_be_bytes());
 
             if player.action == PlayAction::PLAY {
-                let play_crypto_cards = player.play_crypto_cards.clone().unwrap().to_vec();
-                crypto_cards.extend(play_crypto_cards.clone());
-                let play_unmasked_cards = player.play_unmasked_cards.clone().unwrap();
-                let play_unmasked_cards_vec = play_unmasked_cards.to_vec();
-                unmasked_cards.extend(play_unmasked_cards_vec);
+                let play_crypto_cards = player.play_crypto_cards.take().unwrap().to_vec();
+
+                let play_unmasked_cards = player.play_unmasked_cards.take().unwrap();
+                unmasked_cards.extend(play_unmasked_cards.to_vec());
+
                 let classic = play_unmasked_cards.morph_to_classic().unwrap();
-                assert!(classic.validate_rules());
+                assert!(classic.check_format());
                 assert!(classic > round_max_cards);
+                
+                // Check if Heart 3 is played first
+                if is_first_play {
+                    assert!(classic.contains(&ClassicCard::new(Value::Three, Suite::Heart)));
+                    is_first_play = false;
+                }
 
                 let hand = input_hand.get_mut(current).unwrap();
-                let hand_len = hand.len();
-                let play_len = classic.len();
-                for element in play_crypto_cards {
-                    if let Some(index) = hand.iter().position(|&x| x == element) {
+                let hand_len_before_remove = hand.len();
+
+                for element in play_crypto_cards.iter() {
+                    if let Some(index) = hand.iter().position(|&x| x == *element) {
                         hand.remove(index);
                     }
 
@@ -74,29 +78,38 @@ pub fn main() {
                     element.0.e2.serialize_compressed(&mut e2_bytes).unwrap();
                     msg.extend(e2_bytes);
                 }
-                let remainder_len = hand.len();
-                assert_eq!(hand_len, remainder_len + play_len);
 
-                if hand.len() == 0 && final_winner == 0 {
-                    final_winner = current + 1
+                crypto_cards.extend(play_crypto_cards);
+
+                let hand_len_after_remove = hand.len();
+                assert_eq!(
+                    hand_len_before_remove,
+                    hand_len_after_remove + classic.len()
+                );
+
+                if hand_len_after_remove == 0 {
+                    packs.push(msg);
+                    break 'outer;
                 }
 
                 round_max_cards = classic;
-                current_winner = current;
+                round_first_player = current;
             }
 
             packs.push(msg);
         }
 
-        round_winner = current_winner;
+        first_player = round_first_player;
     }
+
+    let remaining_hand: Vec<_> = input_hand.iter().map(|x| x.len()).collect();
 
     println!("total cycle:{}", env::cycle_count());
 
     env::commit(&TaskCommit {
         room_id,
+        remaining_hand,
         players_hand,
-        winner: final_winner,
         crypto_cards,
         unmasked_cards,
     });
