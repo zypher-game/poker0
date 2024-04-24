@@ -1,6 +1,8 @@
 use crate::{
-    cards::{EncodingCard, RevealCard},
-    combination::{ClassicCardCombination, CryptoCardCombination, EncodingCardCombination},
+    cards::{CryptoCard, EncodingCard, RevealCard},
+    combination::{
+        ClassicCardCombination, CryptoCardCombination, EncodingCardCombination, IndexCombination,
+    },
     errors::{PokerError, Result},
     schnorr::{KeyPair, PublicKey, Signature},
 };
@@ -55,7 +57,7 @@ pub struct PlayerEnv0 {
     pub round_id: u8,
     pub turn_id: u8,
     pub action: PlayAction,
-    pub play_crypto_cards: Option<CryptoCardCombination>,
+    pub play_crypto_cards: Option<IndexCombination>,
     pub play_unmasked_cards: Option<EncodingCardCombination>,
 }
 
@@ -165,18 +167,23 @@ impl PlayerEnv {
         Ok(unmasked_cards)
     }
 
-    pub fn convert0(&self) -> PlayerEnv0 {
-        let unmasked_cards = if self.action == PlayAction::PLAY {
+    pub fn convert0(&self, hand: &[CryptoCard]) -> PlayerEnv0 {
+        let (unmasked_cards, crypto_cards) = if self.action == PlayAction::PLAY {
             let unmasked_cards = self.verify_and_get_reveals().unwrap();
-            let unmasked_cards = self
+            let (unmasked_cards, crypto_cards) = self
                 .play_crypto_cards
                 .as_ref()
-                .and_then(|x| Some(x.morph_to_encoding(&unmasked_cards)))
+                .and_then(|x| {
+                    Some((
+                        Some(x.morph_to_encoding(&unmasked_cards)),
+                        Some(x.morph_to_index(hand)),
+                    ))
+                })
                 .unwrap();
 
-            Some(unmasked_cards)
+            (unmasked_cards, crypto_cards)
         } else {
-            None
+            (None, None)
         };
 
         PlayerEnv0 {
@@ -184,7 +191,7 @@ impl PlayerEnv {
             round_id: self.round_id,
             turn_id: self.turn_id,
             action: self.action,
-            play_crypto_cards: self.play_crypto_cards.clone(),
+            play_crypto_cards: crypto_cards,
             play_unmasked_cards: unmasked_cards,
         }
     }

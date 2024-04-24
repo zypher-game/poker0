@@ -743,4 +743,69 @@ impl CryptoCardCombination {
             AAA(_, _, _) => AAA(reveals[0], reveals[1], reveals[2]),
         }
     }
+
+    pub fn morph_to_index(&self, hand: &[CryptoCard]) -> IndexCombination {
+        match self {
+            DefaultCombination => DefaultCombination,
+            Single(x) => Single(hand.iter().position(|y| x == y).unwrap()),
+            Pair(x1, x2) => Pair(
+                hand.iter().position(|y| x1 == y).unwrap(),
+                hand.iter().position(|y| x2 == y).unwrap(),
+            ),
+            Three(x1, x2, x3) => Three(
+                hand.iter().position(|y| x1 == y).unwrap(),
+                hand.iter().position(|y| x2 == y).unwrap(),
+                hand.iter().position(|y| x3 == y).unwrap(),
+            ),
+            ThreeWithOne(x1, x2, x3, x4) => ThreeWithOne(
+                hand.iter().position(|y| x1 == y).unwrap(),
+                hand.iter().position(|y| x2 == y).unwrap(),
+                hand.iter().position(|y| x3 == y).unwrap(),
+                hand.iter().position(|y| x4 == y).unwrap(),
+            ),
+            ThreeWithPair(x1, x2, x3, x4, x5) => ThreeWithPair(
+                hand.iter().position(|y| x1 == y).unwrap(),
+                hand.iter().position(|y| x2 == y).unwrap(),
+                hand.iter().position(|y| x3 == y).unwrap(),
+                hand.iter().position(|y| x4 == y).unwrap(),
+                hand.iter().position(|y| x5 == y).unwrap(),
+            ),
+            Straight(x) => Straight(
+                x.iter()
+                    .map(|y| hand.iter().position(|z| z == y).unwrap())
+                    .collect(),
+            ),
+            ConnectedPairs(x) => ConnectedPairs(
+                x.iter()
+                    .map(|y| {
+                        (
+                            hand.iter().position(|z| *z == y.0).unwrap(),
+                            hand.iter().position(|z| *z == y.1).unwrap(),
+                        )
+                    })
+                    .collect(),
+            ),
+            FourWithTwo(x1, x2, x3, x4, x5, x6) => FourWithTwo(
+                hand.iter().position(|y| x1 == y).unwrap(),
+                hand.iter().position(|y| x2 == y).unwrap(),
+                hand.iter().position(|y| x3 == y).unwrap(),
+                hand.iter().position(|y| x4 == y).unwrap(),
+                hand.iter().position(|y| x5 == y).unwrap(),
+                hand.iter().position(|y| x6 == y).unwrap(),
+            ),
+            Bomb(x1, x2, x3, x4) => Bomb(
+                hand.iter().position(|y| x1 == y).unwrap(),
+                hand.iter().position(|y| x2 == y).unwrap(),
+                hand.iter().position(|y| x3 == y).unwrap(),
+                hand.iter().position(|y| x4 == y).unwrap(),
+            ),
+            AAA(x1, x2, x3) => AAA(
+                hand.iter().position(|y| x1 == y).unwrap(),
+                hand.iter().position(|y| x2 == y).unwrap(),
+                hand.iter().position(|y| x3 == y).unwrap(),
+            ),
+        }
+    }
 }
+
+pub type IndexCombination = Combination<usize>;
