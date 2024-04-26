@@ -82,11 +82,14 @@ impl UnmaskOutsource {
 
 #[cfg(test)]
 mod test {
-    use crate::gadgets::{
-        public_keys::PublicKeyOutsource, reveals::RevealOutsource, unmask::UnmaskOutsource,
+    use crate::{
+        gadgets::{
+            public_keys::PublicKeyOutsource, reveals::RevealOutsource, unmask::UnmaskOutsource,
+        },
+        left_rotate,
     };
     use ark_bn254::Fr;
-    use poker_core::mock_data::task::mock_task;
+    use poker_core::{cards::unmask, mock_data::task::mock_task};
     use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
 
     #[test]
@@ -103,14 +106,14 @@ mod test {
         let mut cs = TurboCS::<Fr>::new();
         cs.load_anemoi_parameters::<AnemoiJive254>();
 
-        let pk_outsource = PublicKeyOutsource::new(&mut cs, &task.players_key);
+        let pk_outsource =
+            PublicKeyOutsource::new(&mut cs, &left_rotate(&task.players_key, task.first_player));
         reveal_outsource.generate_constraints(&mut cs, &pk_outsource);
 
         let size = cs.size;
-        let reveal_cards_projective = reveal_cards.iter().map(|x| x.0.into()).collect::<Vec<_>>();
-        let unmasked_card =
-            zshuffle::reveal::unmask(&card.0.to_ciphertext(), &reveal_cards_projective).unwrap();
-        let mut unmask_outsource = UnmaskOutsource::new(&card, &reveal_cards, &unmasked_card);
+        let unmasked_card = unmask(&card.0, &reveal_cards);
+        let mut unmask_outsource =
+            UnmaskOutsource::new(&card, &reveal_cards, &unmasked_card.0.into());
         unmask_outsource.set_crypto_card_var(reveal_outsource.crypto_card_var);
         unmask_outsource.set_reveal_cards_var(&reveal_outsource.reveal_card_vars);
         unmask_outsource.generate_constraints(&mut cs);

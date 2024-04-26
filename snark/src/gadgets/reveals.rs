@@ -9,9 +9,9 @@ use num_integer::Integer;
 use poker_core::cards::{CryptoCard, RevealCard};
 use zplonk::{
     anemoi::{AnemoiJive, AnemoiJive254},
+    chaum_pedersen::dl::ChaumPedersenDLProof,
     turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS},
 };
-use zshuffle::RevealProof;
 
 use crate::get_divisor;
 
@@ -21,7 +21,7 @@ use super::public_keys::PublicKeyOutsource;
 pub struct RevealOutsource {
     pub crypto_card: CryptoCard,
     pub reveal_cards: Vec<RevealCard>,
-    pub proofs: Vec<RevealProof>,
+    pub proofs: Vec<ChaumPedersenDLProof>,
 
     pub crypto_card_var: (PointVar, PointVar),
     pub reveal_card_vars: Vec<PointVar>,
@@ -31,7 +31,7 @@ impl RevealOutsource {
     pub fn new(
         crypto_card: &CryptoCard,
         reveal_cards: &[RevealCard],
-        proofs: &[RevealProof],
+        proofs: &[ChaumPedersenDLProof],
     ) -> Self {
         assert_eq!(reveal_cards.len(), proofs.len());
 
@@ -182,7 +182,7 @@ impl RevealOutsource {
 #[cfg(test)]
 mod test {
     use super::RevealOutsource;
-    use crate::gadgets::public_keys::PublicKeyOutsource;
+    use crate::{gadgets::public_keys::PublicKeyOutsource, left_rotate};
     use ark_bn254::Fr;
     use poker_core::mock_data::task::mock_task;
     use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
@@ -200,7 +200,8 @@ mod test {
 
         let mut cs = TurboCS::<Fr>::new();
         cs.load_anemoi_parameters::<AnemoiJive254>();
-        let pk_outsource = PublicKeyOutsource::new(&mut cs, &task.players_key);
+        let pk_outsource =
+            PublicKeyOutsource::new(&mut cs, &left_rotate(&task.players_key, task.first_player));
 
         reveal_outsource.generate_constraints(&mut cs, &pk_outsource);
         reveal_outsource.prepare_pi_variables(&mut cs);

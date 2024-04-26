@@ -121,7 +121,8 @@ mod test {
     fn test_signature_constraint_system() {
         let task = mock_task();
         let env = &task.players_env[0][0];
-        env.verify_sign(&task.players_key[0]).unwrap();
+        env.verify_sign(&task.players_key[task.first_player])
+            .unwrap();
 
         let mut cs = TurboCS::<Fr>::new();
         cs.load_anemoi_parameters::<AnemoiJive254>();
@@ -131,13 +132,13 @@ mod test {
         let mut sign_outsource = SignatureOutsource::new(&env.signature, &env.pack());
         sign_outsource.generate_constraints(
             &mut cs,
-            &pk_outsource.public_keys[0],
-            &pk_outsource.cs_vars[0],
+            &pk_outsource.public_keys[task.first_player],
+            &pk_outsource.cs_vars[task.first_player],
         );
 
         let witness = cs.get_and_clear_witness();
         cs.verify_witness(&witness, &[]).unwrap();
 
-        assert_eq!(cs.size, 2334);
+        assert_eq!(cs.size, 2336);
     }
 }

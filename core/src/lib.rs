@@ -5,8 +5,10 @@ use ark_ed_on_bn254::EdwardsProjective;
 use ark_ff::UniformRand;
 use ark_std::rand::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
-use zplonk::utils::serialization::{ark_deserialize, ark_serialize};
-use zshuffle::Ciphertext;
+use zplonk::{
+    shuffle::Ciphertext,
+    utils::serialization::{ark_deserialize, ark_serialize},
+};
 
 pub mod cards;
 pub mod combination;

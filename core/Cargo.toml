@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 zplonk = { workspace = true }
-zshuffle = { workspace = true }
 ark-ec = { workspace = true }
 ark-ff = { workspace = true }
 ark-std = { workspace = true }

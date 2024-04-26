@@ -20,6 +20,7 @@ pub fn main() {
     } = task;
 
     let mut input_hand = players_hand.clone();
+    let first_player_copy = first_player;
 
     let n_rounds = players_env.len();
     let mut is_first_play = true;
@@ -110,6 +111,7 @@ pub fn main() {
 
     env::commit(&TaskCommit {
         room_id,
+        first_player: first_player_copy,
         remaining_hand,
         players_hand,
         crypto_cards,

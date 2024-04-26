@@ -538,7 +538,6 @@ dependencies = [
  "serde",
  "serde_json",
  "zplonk",
- "zshuffle",
 ]
 
 [[package]]
@@ -972,21 +971,4 @@ dependencies = [
  "rand_chacha",
  "serde",
  "sha3",
-]
-
-[[package]]
-name = "zshuffle"
-version = "0.1.0"
-source = "git+https://github.com/zypher-game/uzkge?branch=test#1ebe4f519427f89f5c464e5df36639eed85bb570"
-dependencies = [
- "ark-bn254",
- "ark-ec",
- "ark-ed-on-bn254",
- "ark-ff",
- "ark-serialize",
- "ark-std",
- "bincode",
- "rand_chacha",
- "serde",
- "zplonk",
 ]

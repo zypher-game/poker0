@@ -20,6 +20,7 @@ pub struct Task {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TaskCommit {
     pub room_id: usize,
+    pub first_player: usize,
     pub remaining_hand: Vec<usize>,
     pub players_hand: Vec<Vec<CryptoCard>>,
     // The indices stored in `crypto_cards` refer to the indices of the `players_hand` array.
@@ -61,6 +62,7 @@ impl Task {
 
     pub fn verify(&self) -> TaskCommit {
         let mut input_hand = self.players_hand.clone();
+        let first_player_copy = self.first_player;
 
         let Task {
             room_id,
@@ -143,6 +145,7 @@ impl Task {
 
         TaskCommit {
             room_id,
+            first_player: first_player_copy,
             remaining_hand,
             players_hand,
             crypto_cards,
@@ -165,6 +168,7 @@ mod test {
                 16, 22, 39, 40, 11, 14, 4, 5, 1, 13, 10, 8, 3, 7, 15, 9, 32, 37, 46, 41, 44, 45,
                 47, 34, 38, 0, 23, 35, 36, 2, 42, 33, 43
             ]
-        )
+        );
+        assert_eq!(commit.first_player, 1);
     }
 }

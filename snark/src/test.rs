@@ -30,7 +30,8 @@ fn test_outsource() {
     .unwrap();
     println!("Prove time: {:.2?}", start.elapsed());
 
-    // println!("proof:{}",export_solidity_proof(&proof));
+    // use crate::export_solidity_proof;
+    // println!("proof:{}", export_solidity_proof(&proof));
 
     verify_outsource(
         &verifier_params,

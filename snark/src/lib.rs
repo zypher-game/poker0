@@ -3,7 +3,7 @@ use ark_ec::AffineRepr;
 use ark_ff::{BigInteger, Field, PrimeField};
 use gadgets::{reveals::RevealOutsource, signatures::SignatureOutsource, unmask::UnmaskOutsource};
 use num_bigint::BigUint;
-use poker_core::{play::PlayAction, schnorr::PublicKey, task::Task};
+use poker_core::{cards::unmask, play::PlayAction, schnorr::PublicKey, task::Task};
 use std::{
     fs::{self, File},
     io::Write,
@@ -60,15 +60,9 @@ pub fn create_outsource(
                         RevealOutsource::new(crypto_card, &reveal_cards, &proofs);
                     reveal_outsources.push(reveal_outsource);
 
-                    let reveal_cards_projective =
-                        reveal_cards.iter().map(|x| x.0.into()).collect::<Vec<_>>();
-                    let unmasked_card = zshuffle::reveal::unmask(
-                        &crypto_card.0.to_ciphertext(),
-                        &reveal_cards_projective,
-                    )
-                    .unwrap();
+                    let unmasked_card = unmask(&crypto_card.0, &reveal_cards);
                     let unmask_outsource =
-                        UnmaskOutsource::new(crypto_card, &reveal_cards, &unmasked_card);
+                        UnmaskOutsource::new(crypto_card, &reveal_cards, &unmasked_card.0.into());
                     unmask_outsources.push(unmask_outsource);
                 }
             }
@@ -77,8 +71,10 @@ pub fn create_outsource(
 
     assert_eq!(reveal_outsources.len(), unmask_outsources.len());
 
+    let rotate_keys = left_rotate(&task.players_key, task.first_player);
+
     (
-        task.players_key.clone(),
+        rotate_keys,
         reveal_outsources,
         unmask_outsources,
         signature_outsources,
@@ -113,6 +109,15 @@ pub fn create_and_rescale_outsource(
         unmask_outsources,
         signature_outsources,
     )
+}
+
+pub fn left_rotate<T: Clone>(v: &[T], step: usize) -> Vec<T> {
+    let mut v = v.to_vec();
+    for _ in 0..step {
+        let x = v.remove(0);
+        v.push(x);
+    }
+    v
 }
 
 pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSchemeBN254>) {
@@ -276,7 +281,7 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
         index,
         verifier_params.public_vars_constraint_indices.len()
     ));
-    index += 0x20;
+    // index += 0x20;
 
     // // The public constrain variables indices.
     // content.push_str("// The public constrain variables indices.\n");
@@ -356,7 +361,6 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
             i,
             fr_to_hex(k)
         ));
-        index += 0x20;
     }
     content.push_str("}\n");
     content.push_str("}");

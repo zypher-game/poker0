@@ -1,20 +1,16 @@
-use ark_ec::CurveGroup;
 use ark_ed_on_bn254::EdwardsProjective;
 use ark_std::rand::SeedableRng;
 use hashbrown::HashMap;
 use rand_chacha::ChaChaRng;
-use zshuffle::{
-    reveal::{reveal0, unmask, verify_reveal0},
-    Ciphertext,
-};
+use zplonk::shuffle::Ciphertext;
 
 use crate::{
-    cards::{CryptoCard, RevealCard, ENCODING_CARDS_MAPPING},
+    cards::{reveal0, unmask, verify_reveal0, CryptoCard, ENCODING_CARDS_MAPPING},
     combination::CryptoCardCombination,
     play::{PlayAction, PlayerEnvBuilder},
     schnorr::KeyPair,
     task::Task,
-    CiphertextAffine,
+    CiphertextAffine, CiphertextAffineRepr,
 };
 
 pub fn mock_task() -> Task {
@@ -40,13 +36,14 @@ pub fn mock_task() -> Task {
     let shuffle_cards: Vec<Ciphertext<EdwardsProjective>> =
         serde_json::from_str(&card_serialized).unwrap();
 
+    let shuffle_cards = shuffle_cards
+        .iter()
+        .map(|x| (*x).into())
+        .collect::<Vec<CiphertextAffineRepr>>();
+
     let alice_deck = &shuffle_cards[..16];
     let bob_deck = &shuffle_cards[16..32];
     let charlie_deck = &shuffle_cards[32..];
-
-    let alice_z: zshuffle::keygen::Keypair = alice.clone().into();
-    let bob_z: zshuffle::keygen::Keypair = bob.clone().into();
-    let charlie_z: zshuffle::keygen::Keypair = charlie.clone().into();
 
     let mut a_card = vec![];
     let mut b_card = vec![];
@@ -55,115 +52,73 @@ pub fn mock_task() -> Task {
     let mut reveal_proofs = HashMap::new();
 
     for card in alice_deck.iter() {
-        let (reveal_card_b, reveal_proof_b) = reveal0(&mut rng, &bob_z, card).unwrap();
-        let (reveal_card_c, reveal_proof_c) = reveal0(&mut rng, &charlie_z, card).unwrap();
-        let (reveal_card_a, reveal_proof_a) = reveal0(&mut rng, &alice_z, card).unwrap();
-        verify_reveal0(&bob_z.public, card, &reveal_card_b, &reveal_proof_b).unwrap();
-        verify_reveal0(&charlie_z.public, card, &reveal_card_c, &reveal_proof_c).unwrap();
-        verify_reveal0(&alice_z.public, card, &reveal_card_a, &reveal_proof_a).unwrap();
+        let (reveal_card_b, reveal_proof_b) = reveal0(&mut rng, &bob, card).unwrap();
+        let (reveal_card_c, reveal_proof_c) = reveal0(&mut rng, &charlie, card).unwrap();
+        let (reveal_card_a, reveal_proof_a) = reveal0(&mut rng, &alice, card).unwrap();
+        verify_reveal0(&bob.public_key, card, &reveal_card_b, &reveal_proof_b).unwrap();
+        verify_reveal0(&charlie.public_key, card, &reveal_card_c, &reveal_proof_c).unwrap();
+        verify_reveal0(&alice.public_key, card, &reveal_card_a, &reveal_proof_a).unwrap();
 
         let reveals = vec![reveal_card_b, reveal_card_a, reveal_card_c];
-        let unmasked_card = unmask(card, &reveals).unwrap();
+        let unmasked_card = unmask(card, &reveals);
 
-        let opened_card = ENCODING_CARDS_MAPPING
-            .get(&unmasked_card.into_affine())
-            .unwrap();
+        let opened_card = ENCODING_CARDS_MAPPING.get(&unmasked_card.0).unwrap();
         a_card.push(opened_card);
 
         reveal_proofs.insert(
             card,
             vec![
-                (
-                    RevealCard(reveal_card_a.into_affine()),
-                    reveal_proof_a,
-                    alice.get_public_key(),
-                ),
-                (
-                    RevealCard(reveal_card_b.into_affine()),
-                    reveal_proof_b,
-                    bob.get_public_key(),
-                ),
-                (
-                    RevealCard(reveal_card_c.into_affine()),
-                    reveal_proof_c,
-                    charlie.get_public_key(),
-                ),
+                (reveal_card_b, reveal_proof_b, bob.get_public_key()),
+                (reveal_card_c, reveal_proof_c, charlie.get_public_key()),
+                (reveal_card_a, reveal_proof_a, alice.get_public_key()),
             ],
         );
     }
 
     for card in bob_deck.iter() {
-        let (reveal_card_c, reveal_proof_c) = reveal0(&mut rng, &charlie_z, card).unwrap();
-        let (reveal_card_a, reveal_proof_a) = reveal0(&mut rng, &alice_z, card).unwrap();
-        let (reveal_card_b, reveal_proof_b) = reveal0(&mut rng, &bob_z, card).unwrap();
-        verify_reveal0(&bob_z.public, card, &reveal_card_b, &reveal_proof_b).unwrap();
-        verify_reveal0(&charlie_z.public, card, &reveal_card_c, &reveal_proof_c).unwrap();
-        verify_reveal0(&alice_z.public, card, &reveal_card_a, &reveal_proof_a).unwrap();
+        let (reveal_card_c, reveal_proof_c) = reveal0(&mut rng, &charlie, card).unwrap();
+        let (reveal_card_a, reveal_proof_a) = reveal0(&mut rng, &alice, card).unwrap();
+        let (reveal_card_b, reveal_proof_b) = reveal0(&mut rng, &bob, card).unwrap();
+        verify_reveal0(&bob.public_key, card, &reveal_card_b, &reveal_proof_b).unwrap();
+        verify_reveal0(&charlie.public_key, card, &reveal_card_c, &reveal_proof_c).unwrap();
+        verify_reveal0(&alice.public_key, card, &reveal_card_a, &reveal_proof_a).unwrap();
 
         let reveals = vec![reveal_card_b, reveal_card_a, reveal_card_c];
-        let unmasked_card = unmask(card, &reveals).unwrap();
+        let unmasked_card = unmask(card, &reveals);
 
-        let opened_card = ENCODING_CARDS_MAPPING
-            .get(&unmasked_card.into_affine())
-            .unwrap();
+        let opened_card = ENCODING_CARDS_MAPPING.get(&unmasked_card.0).unwrap();
         b_card.push(opened_card);
 
         reveal_proofs.insert(
             card,
             vec![
-                (
-                    RevealCard(reveal_card_a.into_affine()),
-                    reveal_proof_a,
-                    alice.get_public_key(),
-                ),
-                (
-                    RevealCard(reveal_card_b.into_affine()),
-                    reveal_proof_b,
-                    bob.get_public_key(),
-                ),
-                (
-                    RevealCard(reveal_card_c.into_affine()),
-                    reveal_proof_c,
-                    charlie.get_public_key(),
-                ),
+                (reveal_card_b, reveal_proof_b, bob.get_public_key()),
+                (reveal_card_c, reveal_proof_c, charlie.get_public_key()),
+                (reveal_card_a, reveal_proof_a, alice.get_public_key()),
             ],
         );
     }
 
     for card in charlie_deck.iter() {
-        let (reveal_card_c, reveal_proof_c) = reveal0(&mut rng, &charlie_z, card).unwrap();
-        let (reveal_card_a, reveal_proof_a) = reveal0(&mut rng, &alice_z, card).unwrap();
-        let (reveal_card_b, reveal_proof_b) = reveal0(&mut rng, &bob_z, card).unwrap();
-        verify_reveal0(&bob_z.public, card, &reveal_card_b, &reveal_proof_b).unwrap();
-        verify_reveal0(&charlie_z.public, card, &reveal_card_c, &reveal_proof_c).unwrap();
-        verify_reveal0(&alice_z.public, card, &reveal_card_a, &reveal_proof_a).unwrap();
+        let (reveal_card_c, reveal_proof_c) = reveal0(&mut rng, &charlie, card).unwrap();
+        let (reveal_card_a, reveal_proof_a) = reveal0(&mut rng, &alice, card).unwrap();
+        let (reveal_card_b, reveal_proof_b) = reveal0(&mut rng, &bob, card).unwrap();
+        verify_reveal0(&bob.public_key, card, &reveal_card_b, &reveal_proof_b).unwrap();
+        verify_reveal0(&charlie.public_key, card, &reveal_card_c, &reveal_proof_c).unwrap();
+        verify_reveal0(&alice.public_key, card, &reveal_card_a, &reveal_proof_a).unwrap();
 
         let reveals = vec![reveal_card_b, reveal_card_a, reveal_card_c];
-        let unmasked_card = unmask(card, &reveals).unwrap();
+        let unmasked_card = unmask(card, &reveals);
 
-        let opened_card = ENCODING_CARDS_MAPPING
-            .get(&unmasked_card.into_affine())
-            .unwrap();
+        let opened_card = ENCODING_CARDS_MAPPING.get(&unmasked_card.0).unwrap();
         c_card.push(opened_card);
 
         reveal_proofs.insert(
             card,
             vec![
-                (
-                    RevealCard(reveal_card_a.into_affine()),
-                    reveal_proof_a,
-                    alice.get_public_key(),
-                ),
-                (
-                    RevealCard(reveal_card_b.into_affine()),
-                    reveal_proof_b,
-                    bob.get_public_key(),
-                ),
-                (
-                    RevealCard(reveal_card_c.into_affine()),
-                    reveal_proof_c,
-                    charlie.get_public_key(),
-                ),
+                (reveal_card_b, reveal_proof_b, bob.get_public_key()),
+                (reveal_card_c, reveal_proof_c, charlie.get_public_key()),
+                (reveal_card_a, reveal_proof_a, alice.get_public_key()),
             ],
         );
     }

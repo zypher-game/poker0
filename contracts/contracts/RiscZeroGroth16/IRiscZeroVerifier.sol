@@ -24,21 +24,22 @@ library ReceiptClaimLib {
     bytes32 constant TAG_DIGEST = sha256("risc0.ReceiptClaim");
 
     function digest(ReceiptClaim memory claim) internal pure returns (bytes32) {
-        return sha256(
-            abi.encodePacked(
-                TAG_DIGEST,
-                // down
-                claim.input,
-                claim.preStateDigest,
-                claim.postStateDigest,
-                claim.output,
-                // data
-                uint32(claim.exitCode.system) << 24,
-                uint32(claim.exitCode.user) << 24,
-                // down.length
-                uint16(4) << 8
-            )
-        );
+        return
+            sha256(
+                abi.encodePacked(
+                    TAG_DIGEST,
+                    // down
+                    claim.input,
+                    claim.preStateDigest,
+                    claim.postStateDigest,
+                    claim.output,
+                    // data
+                    uint32(claim.exitCode.system) << 24,
+                    uint32(claim.exitCode.user) << 24,
+                    // down.length
+                    uint16(4) << 8
+                )
+            );
     }
 }
 
@@ -90,16 +91,17 @@ library OutputLib {
     bytes32 constant TAG_DIGEST = sha256("risc0.Output");
 
     function digest(Output memory output) internal pure returns (bytes32) {
-        return sha256(
-            abi.encodePacked(
-                TAG_DIGEST,
-                // down
-                output.journalDigest,
-                output.assumptionsDigest,
-                // down.length
-                uint16(2) << 8
-            )
-        );
+        return
+            sha256(
+                abi.encodePacked(
+                    TAG_DIGEST,
+                    // down
+                    output.journalDigest,
+                    output.assumptionsDigest,
+                    // down.length
+                    uint16(2) << 8
+                )
+            );
     }
 }
 
@@ -127,10 +129,12 @@ interface IRiscZeroVerifier {
     ///     otherwise can be left unconstrained for most use cases.
     /// @param journalDigest The SHA-256 digest of the journal bytes.
     /// @return true if the receipt passes the verification checks. The return code must be checked.
-    function verify(bytes calldata seal, bytes32 imageId, bytes32 postStateDigest, bytes32 journalDigest)
-        external
-        view
-        returns (bool);
+    function verify(
+        bytes calldata seal,
+        bytes32 imageId,
+        bytes32 postStateDigest,
+        bytes32 journalDigest
+    ) external view returns (bool);
 
     /// @notice Verify that the given receipt is a valid RISC Zero receipt, ensuring the `seal` is
     /// valid a cryptographic proof of the execution with the given `claim`.

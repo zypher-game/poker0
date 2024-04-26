@@ -9,7 +9,7 @@ use poker_snark::{
     create_and_rescale_outsource,
     gen_params::{params::VerifierParams, SRS},
 };
-use std::path::PathBuf;
+use std::{path::PathBuf, time::Instant};
 use structopt::StructOpt;
 use zplonk::{
     poly_commit::kzg_poly_commitment::KZGCommitmentSchemeBN254,
@@ -82,7 +82,9 @@ fn gen_premutation(directory: PathBuf) {
         &signature_outsources,
     );
 
+    let start = Instant::now();
     let special = cs.compute_permutation();
+    println!("compute permutation times: {:.2?}", start.elapsed());
 
     let specials_ser = bincode::serialize(&special).unwrap();
     let mut specials_path = directory.clone();

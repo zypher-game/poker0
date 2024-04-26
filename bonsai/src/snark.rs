@@ -45,7 +45,7 @@ mod test {
     use hex::FromHex;
     use num_bigint::BigInt;
     use poker_core::{
-        mock_data::{journal::mock_journal, task0::mock_task0},
+        mock_data::{journal::mock_journal, task::mock_task, task0::mock_task0},
         task::{Task0, TaskCommit},
     };
     use poker_methods::POKER_METHOD_ID;
@@ -71,7 +71,7 @@ mod test {
         let commit: TaskCommit = receipt.journal.decode().unwrap();
         assert_eq!(commit.room_id, task.room_id);
         assert_eq!(commit.players_hand, task.players_hand);
-        assert_eq!(commit.winner, 2);
+        assert_eq!(commit.first_player, task.first_player);
 
         let start = Instant::now();
         let snark_proof = stark_to_snark(session_id).unwrap();
@@ -109,7 +109,7 @@ mod test {
         let commit: TaskCommit = receipt.journal.decode().unwrap();
         assert_eq!(commit.room_id, task.room_id);
         assert_eq!(commit.players_hand, task.players_hand);
-        assert_eq!(commit.winner, 2);
+        assert_eq!(commit.first_player, task.first_player);
 
         let start = Instant::now();
         let snark_proof = stark_to_snark(session_id).unwrap();

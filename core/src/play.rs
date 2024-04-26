@@ -1,19 +1,15 @@
 use crate::{
-    cards::{CryptoCard, EncodingCard, RevealCard},
+    cards::{unmask, verify_reveal0, CryptoCard, EncodingCard, RevealCard},
     combination::{
         ClassicCardCombination, CryptoCardCombination, EncodingCardCombination, IndexCombination,
     },
     errors::{PokerError, Result},
     schnorr::{KeyPair, PublicKey, Signature},
 };
-use ark_ec::CurveGroup;
 use ark_serialize::CanonicalSerialize;
 use rand_chacha::rand_core::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
-use zshuffle::{
-    reveal::{unmask, verify_reveal0},
-    RevealProof,
-};
+use zplonk::chaum_pedersen::dl::ChaumPedersenDLProof;
 
 pub const MAX_PLAYER_HAND_LEN: usize = 18;
 
@@ -46,7 +42,7 @@ pub struct PlayerEnv {
     pub play_crypto_cards: Option<CryptoCardCombination>,
     pub play_classic_cards: Option<ClassicCardCombination>,
     // Note! The order of revealing is based on the order of the players.
-    pub reveals: Vec<Vec<(RevealCard, RevealProof, PublicKey)>>,
+    pub reveals: Vec<Vec<(RevealCard, ChaumPedersenDLProof, PublicKey)>>,
     // Currently using schnorr signatures, with plans to transition to aggregated signatures in the future.
     pub signature: Signature,
 }
@@ -149,19 +145,13 @@ impl PlayerEnv {
         for (reveals, card) in self.reveals.iter().zip(cards.iter()) {
             let mut reveal_cards = Vec::with_capacity(reveals.len());
             for reveal in reveals.iter() {
-                verify_reveal0(
-                    &reveal.2.get_raw(),
-                    &card.0.to_ciphertext(),
-                    &reveal.0 .0.into(),
-                    &reveal.1,
-                )
-                .map_err(|_| PokerError::VerifyReVealError)?;
-                reveal_cards.push(reveal.0 .0.into());
+                verify_reveal0(&reveal.2, &card.0, &reveal.0, &reveal.1)
+                    .map_err(|_| PokerError::VerifyReVealError)?;
+                reveal_cards.push(reveal.0);
             }
 
-            let unmasked_card = unmask(&card.0.to_ciphertext(), &reveal_cards)
-                .map_err(|_| PokerError::UnmaskCardError)?;
-            unmasked_cards.push(EncodingCard(unmasked_card.into_affine()));
+            let unmasked_card = unmask(&card.0, &reveal_cards);
+            unmasked_cards.push(unmasked_card);
         }
 
         Ok(unmasked_cards)
@@ -227,7 +217,10 @@ impl PlayerEnvBuilder {
         self
     }
 
-    pub fn reveals(mut self, reveals: &[Vec<(RevealCard, RevealProof, PublicKey)>]) -> Self {
+    pub fn reveals(
+        mut self,
+        reveals: &[Vec<(RevealCard, ChaumPedersenDLProof, PublicKey)>],
+    ) -> Self {
         self.inner.reveals = reveals.to_vec();
         self
     }

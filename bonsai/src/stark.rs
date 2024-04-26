@@ -84,6 +84,6 @@ mod test {
         let commit: TaskCommit = receipt.journal.decode().unwrap();
         assert_eq!(commit.room_id, task.room_id);
         assert_eq!(commit.players_hand, task.players_hand);
-        assert_eq!(commit.winner, 2);
+        assert_eq!(commit.first_player, task.first_player);
     }
 }

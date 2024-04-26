@@ -42,15 +42,6 @@ pub struct KeyPair {
     pub(crate) public_key: PublicKey,
 }
 
-impl Into<zshuffle::keygen::Keypair> for KeyPair {
-    fn into(self) -> zshuffle::keygen::Keypair {
-        zshuffle::keygen::Keypair {
-            secret: self.get_private_key().0,
-            public: self.get_public_key().0.into(),
-        }
-    }
-}
-
 impl KeyPair {
     pub fn sample<R: CryptoRng + RngCore>(prng: &mut R) -> Self {
         let sk = PrivateKey::random(prng);

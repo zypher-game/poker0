@@ -1,12 +1,22 @@
+use ark_ec::{CurveGroup, PrimeGroup};
 use hashbrown::HashMap;
 
-use ark_ed_on_bn254::EdwardsAffine;
+use ark_ed_on_bn254::{EdwardsAffine, EdwardsProjective};
 use ark_ff::MontFp;
 use rand_chacha::rand_core::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
-use zplonk::utils::serialization::{ark_deserialize, ark_serialize};
+use zplonk::{
+    anemoi::AnemoiJive254,
+    chaum_pedersen::dl::{prove0, verify0, ChaumPedersenDLParameters, ChaumPedersenDLProof},
+    utils::serialization::{ark_deserialize, ark_serialize},
+};
 
-use crate::CiphertextAffineRepr;
+use crate::errors::Result;
+use crate::{
+    errors::PokerError,
+    schnorr::{KeyPair, PublicKey},
+    CiphertextAffineRepr,
+};
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Suite {
@@ -182,6 +192,58 @@ impl CryptoCard {
     pub fn rand<R: CryptoRng + RngCore>(prng: &mut R) -> Self {
         Self(CiphertextAffineRepr::rand(prng))
     }
+}
+
+#[inline]
+pub fn unmask(masked_card: &CiphertextAffineRepr, reveal_cards: &[RevealCard]) -> EncodingCard {
+    let aggregate: EdwardsAffine = reveal_cards
+        .iter()
+        .map(|x| x.0)
+        .sum::<EdwardsProjective>()
+        .into();
+
+    EncodingCard((masked_card.e2 - aggregate).into())
+}
+
+// The zk-friendly reveal algorithm.
+pub fn reveal0<R: CryptoRng + RngCore>(
+    prng: &mut R,
+    keypair: &KeyPair,
+    masked_card: &CiphertextAffineRepr,
+) -> Result<(RevealCard, ChaumPedersenDLProof)> {
+    let reveal = masked_card.e1 * keypair.private_key.0;
+
+    let parameters = ChaumPedersenDLParameters {
+        g: masked_card.e1.into(),
+        h: EdwardsProjective::generator(),
+    };
+
+    let proof = prove0::<_, AnemoiJive254>(
+        prng,
+        &parameters,
+        &keypair.private_key.0,
+        &reveal,
+        &keypair.public_key.get_raw(),
+    )
+    .map_err(|_| PokerError::ReVealError)?;
+
+    Ok((RevealCard(reveal.into_affine()), proof))
+}
+
+// The zk-friendly verify reveal algorithm.
+pub fn verify_reveal0(
+    pk: &PublicKey,
+    masked_card: &CiphertextAffineRepr,
+    reveal_card: &RevealCard,
+    proof: &ChaumPedersenDLProof,
+) -> Result<()> {
+    let parameters = ChaumPedersenDLParameters {
+        g: masked_card.e1.into(),
+        h: EdwardsProjective::generator(),
+    };
+
+    verify0::<AnemoiJive254>(&parameters, &reveal_card.0.into(), &pk.0.into(), proof)
+        .map_err(|_| PokerError::VerifyReVealError)
 }
 
 lazy_static! {

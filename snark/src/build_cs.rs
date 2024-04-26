@@ -26,7 +26,7 @@ pub type Proof = PlonkProof<KZGCommitmentSchemeBN254>;
 
 const PLONK_PROOF_TRANSCRIPT: &[u8] = b"Plonk poker Proof";
 
-pub const N_CARDS: usize = 52;
+pub const N_CARDS: usize = 48;
 pub const N_PLAYS: usize = 3;
 
 pub fn build_cs(
@@ -150,7 +150,7 @@ pub fn verify_outsource(
     //     fn fr_to_hex<F: PrimeField>(x: &F) -> String {
     //         let x = x.into_bigint().to_bytes_be();
     //         let code = hex::encode(&x);
-    //         format!("0x{}",code )
+    //         format!("0x{}", code)
     //     }
 
     //     let mut pi = vec![];
@@ -158,7 +158,7 @@ pub fn verify_outsource(
     //         pi.push(fr_to_hex(x));
     //     }
 
-    //     println!("pi:{:?}",pi);
+    //     println!("pi:{:?}", pi);
     // }
 
     Ok(verifier(
@@ -181,6 +181,7 @@ mod test {
 
     use super::build_cs;
 
+    // cargo test --release --package poker-snark --lib -- build_cs::test::test_build_cs --exact --show-output
     #[test]
     fn test_build_cs() {
         let (public_keys, reveal_outsources, unmask_outsources, signature_outsources) =
