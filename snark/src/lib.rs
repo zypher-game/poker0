@@ -3,7 +3,7 @@ use ark_ec::AffineRepr;
 use ark_ff::{BigInteger, Field, PrimeField};
 use gadgets::{reveals::RevealOutsource, signatures::SignatureOutsource, unmask::UnmaskOutsource};
 use num_bigint::BigUint;
-use poker_core::{cards::unmask, play::PlayAction, schnorr::PublicKey, task::Task};
+use poker_core::{cards::unmask, left_rotate, play::PlayAction, schnorr::PublicKey, task::Task};
 use std::{
     fs::{self, File},
     io::Write,
@@ -109,15 +109,6 @@ pub fn create_and_rescale_outsource(
         unmask_outsources,
         signature_outsources,
     )
-}
-
-pub fn left_rotate<T: Clone>(v: &[T], step: usize) -> Vec<T> {
-    let mut v = v.to_vec();
-    for _ in 0..step {
-        let x = v.remove(0);
-        v.push(x);
-    }
-    v
 }
 
 pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSchemeBN254>) {

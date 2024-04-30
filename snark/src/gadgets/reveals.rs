@@ -6,10 +6,12 @@ use ark_ed_on_bn254::EdwardsProjective;
 use ark_ff::{BigInteger, Field, PrimeField};
 use num_bigint::BigUint;
 use num_integer::Integer;
-use poker_core::cards::{CryptoCard, RevealCard};
+use poker_core::{
+    cards::{CryptoCard, RevealCard},
+    RevealProof,
+};
 use zplonk::{
     anemoi::{AnemoiJive, AnemoiJive254},
-    chaum_pedersen::dl::ChaumPedersenDLProof,
     turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS},
 };
 
@@ -21,7 +23,7 @@ use super::public_keys::PublicKeyOutsource;
 pub struct RevealOutsource {
     pub crypto_card: CryptoCard,
     pub reveal_cards: Vec<RevealCard>,
-    pub proofs: Vec<ChaumPedersenDLProof>,
+    pub proofs: Vec<RevealProof>,
 
     pub crypto_card_var: (PointVar, PointVar),
     pub reveal_card_vars: Vec<PointVar>,
@@ -31,7 +33,7 @@ impl RevealOutsource {
     pub fn new(
         crypto_card: &CryptoCard,
         reveal_cards: &[RevealCard],
-        proofs: &[ChaumPedersenDLProof],
+        proofs: &[RevealProof],
     ) -> Self {
         assert_eq!(reveal_cards.len(), proofs.len());
 

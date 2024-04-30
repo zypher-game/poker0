@@ -5,13 +5,11 @@ use crate::{
     },
     errors::{PokerError, Result},
     schnorr::{KeyPair, PublicKey, Signature},
+    RevealProof,
 };
 use ark_serialize::CanonicalSerialize;
 use rand_chacha::rand_core::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
-use zplonk::chaum_pedersen::dl::ChaumPedersenDLProof;
-
-pub const MAX_PLAYER_HAND_LEN: usize = 18;
 
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
 pub enum PlayAction {
@@ -42,7 +40,7 @@ pub struct PlayerEnv {
     pub play_crypto_cards: Option<CryptoCardCombination>,
     pub play_classic_cards: Option<ClassicCardCombination>,
     // Note! The order of revealing is based on the order of the players.
-    pub reveals: Vec<Vec<(RevealCard, ChaumPedersenDLProof, PublicKey)>>,
+    pub reveals: Vec<Vec<(RevealCard, RevealProof, PublicKey)>>,
     // Currently using schnorr signatures, with plans to transition to aggregated signatures in the future.
     pub signature: Signature,
 }
@@ -112,12 +110,34 @@ impl PlayerEnv {
         msg
     }
 
+    // Synchronize the order of revealing with the order in which players play their cards.
+    pub fn sync_reveal_order(&mut self, pks: &Vec<PublicKey>) {
+        if self.action == PlayAction::PLAY {
+            let mut reveals = vec![];
+
+            for r1 in self.reveals.iter() {
+                let mut tmp = vec![];
+                for pk in pks {
+                    for r2 in r1.iter() {
+                        if *pk == r2.2 {
+                            tmp.push(r2.clone())
+                        }
+                    }
+                }
+
+                reveals.push(tmp)
+            }
+
+            self.reveals = reveals;
+        }
+    }
+
     pub fn verify_sign(&self, pk: &PublicKey) -> Result<()> {
         let msg = self.pack();
         pk.verify(&self.signature, &msg)
     }
 
-    pub fn verify_sign_with_params(
+    pub fn verify_sign_with_external_params(
         &self,
         pk: &PublicKey,
         room_id: usize,
@@ -128,11 +148,10 @@ impl PlayerEnv {
         assert_eq!(self.round_id, round_id);
         assert_eq!(self.turn_id, turn_id);
 
-        let msg = self.pack();
-        pk.verify(&self.signature, &msg)
+        self.verify_sign(pk)
     }
 
-    pub fn verify_and_get_reveals(&self) -> Result<Vec<EncodingCard>> {
+    pub fn unmask_cards(&self) -> Result<Vec<EncodingCard>> {
         let cards = self
             .play_crypto_cards
             .clone()
@@ -159,7 +178,7 @@ impl PlayerEnv {
 
     pub fn convert0(&self, hand: &[CryptoCard]) -> PlayerEnv0 {
         let (unmasked_cards, crypto_cards) = if self.action == PlayAction::PLAY {
-            let unmasked_cards = self.verify_and_get_reveals().unwrap();
+            let unmasked_cards = self.unmask_cards().unwrap();
             let (unmasked_cards, crypto_cards) = self
                 .play_crypto_cards
                 .as_ref()
@@ -217,10 +236,7 @@ impl PlayerEnvBuilder {
         self
     }
 
-    pub fn reveals(
-        mut self,
-        reveals: &[Vec<(RevealCard, ChaumPedersenDLProof, PublicKey)>],
-    ) -> Self {
+    pub fn reveals(mut self, reveals: &[Vec<(RevealCard, RevealProof, PublicKey)>]) -> Self {
         self.inner.reveals = reveals.to_vec();
         self
     }
@@ -250,7 +266,7 @@ impl PlayerEnvBuilder {
         self.sanity_check()?;
 
         if self.inner.action == PlayAction::PLAY {
-            let reveals = self.inner.verify_and_get_reveals().unwrap();
+            let reveals = self.inner.unmask_cards().unwrap();
             let encode_card = self
                 .inner
                 .play_crypto_cards

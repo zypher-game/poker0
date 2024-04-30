@@ -12,7 +12,6 @@ default = ["console_error_panic_hook"]
 
 [dependencies]
 poker-core = { workspace = true }
-zshuffle = { workspace = true }
 ark-ec = { workspace = true }
 ark-ff = { workspace = true }
 ark-serialize = { workspace = true }

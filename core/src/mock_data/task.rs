@@ -7,6 +7,7 @@ use zplonk::shuffle::Ciphertext;
 use crate::{
     cards::{reveal0, unmask, verify_reveal0, CryptoCard, ENCODING_CARDS_MAPPING},
     combination::CryptoCardCombination,
+    left_rotate,
     play::{PlayAction, PlayerEnvBuilder},
     schnorr::KeyPair,
     task::Task,
@@ -116,9 +117,9 @@ pub fn mock_task() -> Task {
         reveal_proofs.insert(
             card,
             vec![
-                (reveal_card_b, reveal_proof_b, bob.get_public_key()),
                 (reveal_card_c, reveal_proof_c, charlie.get_public_key()),
                 (reveal_card_a, reveal_proof_a, alice.get_public_key()),
+                (reveal_card_b, reveal_proof_b, bob.get_public_key()),
             ],
         );
     }
@@ -535,13 +536,19 @@ pub fn mock_task() -> Task {
 
     let round_6 = vec![charlie_play_6_0];
 
-    let players_env = vec![
+    let  first_player = 1;
+
+    let mut players_env = vec![
         round_0, round_1, round_2, round_3, round_4, round_5, round_6,
     ];
+    players_env.iter_mut().for_each(|x| {
+        x.iter_mut()
+            .for_each(|y| y.sync_reveal_order(&left_rotate(&players_key, first_player)))
+    });
 
     Task {
         room_id: 1,
-        first_player: 1,
+        first_player,
         players_key,
         players_env,
         players_hand,

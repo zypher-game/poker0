@@ -6,6 +6,7 @@ use ark_ff::UniformRand;
 use ark_std::rand::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
 use zplonk::{
+    chaum_pedersen::dl::ChaumPedersenDLProof,
     shuffle::Ciphertext,
     utils::serialization::{ark_deserialize, ark_serialize},
 };
@@ -22,6 +23,16 @@ pub mod task;
 extern crate lazy_static;
 
 pub type CiphertextAffineRepr = CiphertextAffine<EdwardsProjective>;
+pub type RevealProof = ChaumPedersenDLProof;
+
+pub fn left_rotate<T: Clone>(v: &[T], step: usize) -> Vec<T> {
+    let mut v = v.to_vec();
+    for _ in 0..step {
+        let x = v.remove(0);
+        v.push(x);
+    }
+    v
+}
 
 /// An ElGamal ciphertext
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default, Deserialize, Serialize)]

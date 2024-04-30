@@ -1,6 +1,6 @@
-use ark_ec::CurveGroup;
+use ark_ec::{AffineRepr, CurveGroup};
 use ark_ed_on_bn254::{EdwardsAffine, Fq};
-use ark_ff::PrimeField;
+use ark_ff::{BigInteger, PrimeField};
 use ark_serialize::{Compress, Validate};
 use rand_chacha::{
     rand_core::{CryptoRng, RngCore, SeedableRng},
@@ -27,6 +27,16 @@ pub fn hex_to_scalar<F: PrimeField>(hex: &str) -> Result<F, JsValue> {
     Ok(F::from_be_bytes_mod_order(&bytes))
 }
 
+pub fn scalar_to_hex<F: PrimeField>(scalar: &F, with_start: bool) -> String {
+    let bytes = scalar.into_bigint().to_bytes_be();
+    let s = hex::encode(&bytes);
+    if with_start {
+        format!("0x{}", s)
+    } else {
+        s
+    }
+}
+
 pub fn hex_to_point<G: CurveGroup>(hex: &str) -> Result<G, JsValue> {
     let hex = hex.trim_start_matches("0x");
     let bytes = hex::decode(hex).map_err(error_to_jsvalue)?;
@@ -45,4 +55,35 @@ pub fn uncompress_to_point(x_str: &str, y_str: &str) -> Result<EdwardsAffine, Js
     let affine = EdwardsAffine::new(x, y);
 
     Ok(affine)
+}
+
+pub fn point_to_uncompress<F: PrimeField, G: CurveGroup<BaseField = F>>(
+    point: &G,
+    with_start: bool,
+) -> (String, String) {
+    let affine = G::Affine::from(*point);
+    let (x, y) = affine.xy().unwrap();
+    let x_bytes = x.into_bigint().to_bytes_be();
+    let y_bytes = y.into_bigint().to_bytes_be();
+    let x = hex::encode(&x_bytes);
+    let y = hex::encode(&y_bytes);
+
+    if with_start {
+        (format!("0x{}", x), format!("0x{}", y))
+    } else {
+        (x, y)
+    }
+}
+
+pub fn point_to_hex<G: CurveGroup>(point: &G, with_start: bool) -> String {
+    let mut bytes = Vec::new();
+    point
+        .serialize_with_mode(&mut bytes, Compress::Yes)
+        .unwrap();
+    let s = hex::encode(&bytes);
+    if with_start {
+        format!("0x{}", s)
+    } else {
+        s
+    }
 }

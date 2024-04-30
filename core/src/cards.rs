@@ -7,16 +7,16 @@ use rand_chacha::rand_core::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
 use zplonk::{
     anemoi::AnemoiJive254,
-    chaum_pedersen::dl::{prove0, verify0, ChaumPedersenDLParameters, ChaumPedersenDLProof},
+    chaum_pedersen::dl::{prove0, verify0, ChaumPedersenDLParameters},
     utils::serialization::{ark_deserialize, ark_serialize},
 };
 
-use crate::errors::Result;
 use crate::{
     errors::PokerError,
     schnorr::{KeyPair, PublicKey},
     CiphertextAffineRepr,
 };
+use crate::{errors::Result, RevealProof};
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Suite {
@@ -179,7 +179,7 @@ pub struct EncodingCard(
     pub  EdwardsAffine,
 );
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Default)]
 pub struct RevealCard(
     #[serde(serialize_with = "ark_serialize", deserialize_with = "ark_deserialize")]
     pub  EdwardsAffine,
@@ -210,7 +210,7 @@ pub fn reveal0<R: CryptoRng + RngCore>(
     prng: &mut R,
     keypair: &KeyPair,
     masked_card: &CiphertextAffineRepr,
-) -> Result<(RevealCard, ChaumPedersenDLProof)> {
+) -> Result<(RevealCard, RevealProof)> {
     let reveal = masked_card.e1 * keypair.private_key.0;
 
     let parameters = ChaumPedersenDLParameters {
@@ -235,7 +235,7 @@ pub fn verify_reveal0(
     pk: &PublicKey,
     masked_card: &CiphertextAffineRepr,
     reveal_card: &RevealCard,
-    proof: &ChaumPedersenDLProof,
+    proof: &RevealProof,
 ) -> Result<()> {
     let parameters = ChaumPedersenDLParameters {
         g: masked_card.e1.into(),
@@ -247,6 +247,34 @@ pub fn verify_reveal0(
 }
 
 lazy_static! {
+    pub static ref DECK: Vec<ClassicCard> = {
+        let mut deck = vec![];
+
+        for value in Value::VALUES.iter() {
+            match value {
+                Value::Ace => {
+                    for suite in Suite::SUITES.iter().skip(1) {
+                        let classic_card = ClassicCard::new(*value, *suite);
+                        deck.push(classic_card);
+                    }
+                }
+
+                Value::Two => {
+                    let classic_card = ClassicCard::new(*value, Suite::Heart);
+                    deck.push(classic_card);
+                }
+
+                _ => {
+                    for suite in Suite::SUITES.iter() {
+                        let classic_card = ClassicCard::new(*value, *suite);
+                        deck.push(classic_card);
+                    }
+                }
+            }
+        }
+
+        deck
+    };
     pub static ref ENCODING_CARDS_MAPPING: HashMap<EdwardsAffine, ClassicCard> = {
         let point = vec![
             (
@@ -641,32 +669,8 @@ lazy_static! {
             .collect::<Vec<EdwardsAffine>>();
 
         let mut map = HashMap::new();
-
-        let mut i = 0;
-        for value in Value::VALUES.iter() {
-            match value {
-                Value::Ace => {
-                    for suite in Suite::SUITES.iter().skip(1) {
-                        let classic_card = ClassicCard::new(*value, *suite);
-                        map.insert(encoding_card[i], classic_card);
-                        i += 1;
-                    }
-                }
-
-                Value::Two => {
-                    let classic_card = ClassicCard::new(*value, Suite::Heart);
-                    map.insert(encoding_card[i], classic_card);
-                    i += 1;
-                }
-
-                _ => {
-                    for suite in Suite::SUITES.iter() {
-                        let classic_card = ClassicCard::new(*value, *suite);
-                        map.insert(encoding_card[i], classic_card);
-                        i += 1;
-                    }
-                }
-            }
+        for (i, classic_card) in DECK.iter().enumerate() {
+            map.insert(encoding_card[i], *classic_card);
         }
 
         map

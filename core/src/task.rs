@@ -93,7 +93,7 @@ impl Task {
                 let current = (first_player + i) % N_PLAYERS;
 
                 assert!(player
-                    .verify_sign_with_params(
+                    .verify_sign_with_external_params(
                         &players_key[current],
                         room_id,
                         round_id as u8,
@@ -102,7 +102,7 @@ impl Task {
                     .is_ok());
 
                 if player.action == PlayAction::PLAY {
-                    let reveals = player.verify_and_get_reveals().unwrap();
+                    let reveals = player.unmask_cards().unwrap();
                     let encoding = player
                         .play_crypto_cards
                         .as_ref()
