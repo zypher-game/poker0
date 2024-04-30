@@ -2,9 +2,10 @@
 pragma solidity ^0.8.20;
 
 contract VerifierKeyExtra1 {
-    uint256[328] public PI_POLY_INDICES_LOC;
-    constructor() {
+    function PI_POLY_INDICES_LOC() public returns (uint256[328] memory) {
         // The public constrain variables indices.
+        uint256[328] memory PI_POLY_INDICES_LOC;
+
         PI_POLY_INDICES_LOC[0] = 0x2260e724844bca5251829353968e4915305258418357473a5c1d597f613f6cbd;
         PI_POLY_INDICES_LOC[1] = 0x2087ea2cd664278608fb0ebdb820907f598502c81b6690c185e2bf15cb935f42;
         PI_POLY_INDICES_LOC[2] = 0x19ddbcaf3a8d46c15c0176fbb5b95e4dc57088ff13f4d1bd84c6bfa57dcdc0e0;
@@ -333,5 +334,7 @@ contract VerifierKeyExtra1 {
         PI_POLY_INDICES_LOC[325] = 0x1a362eb4ffde09f2a90059b1953b2bb1798ca5c91b493593f9f7cc2a7780a5b9;
         PI_POLY_INDICES_LOC[326] = 0x235de036b1bdb523e787a1d987b953cb38977bb26ca4ebfe2200aa46db876676;
         PI_POLY_INDICES_LOC[327] = 0x078c08c2ab41eec7c8f3fbd67eb4d76dddfbecb83e49b4fb82ef903a725edfa7;
+
+        return PI_POLY_INDICES_LOC;
     }
 }

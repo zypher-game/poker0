@@ -536,7 +536,7 @@ pub fn mock_task() -> Task {
 
     let round_6 = vec![charlie_play_6_0];
 
-    let  first_player = 1;
+    let first_player = 1;
 
     let mut players_env = vec![
         round_0, round_1, round_2, round_3, round_4, round_5, round_6,

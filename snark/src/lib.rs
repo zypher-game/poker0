@@ -305,14 +305,18 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
     content.push_str("\n");
     content.push_str(&format!("contract {} ", format!("VerifierKeyExtra1")));
     content.push_str("{\n");
+
     content.push_str(&format!(
-        "uint256[{}] public PI_POLY_INDICES_LOC;",
+        "function PI_POLY_INDICES_LOC() public returns (uint256[{}] memory) ",
+        verifier_params.public_vars_constraint_indices.len()
+    ));
+    content.push_str("{ \n");
+    content.push_str("// The public constrain variables indices.\n");
+    content.push_str(&format!(
+        "uint256[{}] memory PI_POLY_INDICES_LOC;",
         verifier_params.public_vars_constraint_indices.len()
     ));
     content.push_str("\n");
-
-    content.push_str("constructor() {\n");
-    content.push_str("// The public constrain variables indices.\n");
     for (i, k) in verifier_params
         .public_vars_constraint_indices
         .iter()
@@ -325,7 +329,8 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
             fr_to_hex(&root_pow)
         ));
     }
-    content.push_str("}\n");
+    content.push_str("return PI_POLY_INDICES_LOC;\n");
+    content.push_str("}");
     content.push_str("}");
 
     file.write_all(content.as_bytes()).unwrap();
@@ -338,14 +343,18 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
     content.push_str("\n");
     content.push_str(&format!("contract {} ", format!("VerifierKeyExtra2")));
     content.push_str("{\n");
+  
     content.push_str(&format!(
-        "uint256[{}] public PI_POLY_LAGRANGE_LOC;",
+        "function PI_POLY_LAGRANGE_LOC() public returns (uint256[{}] memory) ",
+        verifier_params.public_vars_constraint_indices.len()
+    ));
+    content.push_str("{ \n");
+    content.push_str("// The constrain lagrange base by public constrain variables.\n");
+    content.push_str(&format!(
+        "uint256[{}] memory PI_POLY_LAGRANGE_LOC;",
         verifier_params.public_vars_constraint_indices.len()
     ));
     content.push_str("\n");
-
-    content.push_str("constructor() {\n");
-    content.push_str("// The constrain lagrange base by public constrain variables.\n");
     for (i, k) in verifier_params.lagrange_constants.iter().enumerate() {
         content.push_str(&format!(
             "PI_POLY_LAGRANGE_LOC[{}] = {}; \n",
@@ -353,7 +362,8 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
             fr_to_hex(k)
         ));
     }
-    content.push_str("}\n");
+    content.push_str("return PI_POLY_LAGRANGE_LOC;\n");
+    content.push_str("}");
     content.push_str("}");
 
     file.write_all(content.as_bytes()).unwrap();

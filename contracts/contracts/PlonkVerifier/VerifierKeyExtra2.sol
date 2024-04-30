@@ -2,9 +2,10 @@
 pragma solidity ^0.8.20;
 
 contract VerifierKeyExtra2 {
-    uint256[328] public PI_POLY_LAGRANGE_LOC;
-    constructor() {
+    function PI_POLY_LAGRANGE_LOC() public returns (uint256[328] memory) {
         // The constrain lagrange base by public constrain variables.
+        uint256[328] memory PI_POLY_LAGRANGE_LOC;
+
         PI_POLY_LAGRANGE_LOC[0] = 0x01bd665ad6684f340aa13a68c9e74c125e78c8449c11eda832739e0449207314;
         PI_POLY_LAGRANGE_LOC[1] = 0x2631669647e827f47bd7244aeef32d1b84132849e6957a0321596a402b8e1eba;
         PI_POLY_LAGRANGE_LOC[2] = 0x06cb7729b92d9d77f00f4b29f1aad6b5da73f62a85b75cef92b5e879cba337dd;
@@ -333,5 +334,7 @@ contract VerifierKeyExtra2 {
         PI_POLY_LAGRANGE_LOC[325] = 0x2e6f1625785a54961ed0515776f6b26a0c8b47bdaae8ba7cd79f8a1a3fa92079;
         PI_POLY_LAGRANGE_LOC[326] = 0x1a0289fe9dc47c084bd4b6a2b55ac682be4a92ca9d14f636c8aee7233f6763b9;
         PI_POLY_LAGRANGE_LOC[327] = 0x03681b2ac8c0ac9b18ca32b4989fb08155d0b3d5936db2e6543da50c45ea8e26;
+
+        return PI_POLY_LAGRANGE_LOC;
     }
 }
