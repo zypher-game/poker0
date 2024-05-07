@@ -6,14 +6,14 @@ use wasm_bindgen::JsValue;
 
 use crate::utils::uncompress_to_point;
 
-/// e2.0, e2.1, e1.0, e1.1
+///  e1.0, e1.1, e2.0, e2.1,
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CryptoCard(pub String, pub String, pub String, pub String);
 
 impl CryptoCard {
     pub fn deserialize(&self) -> Result<ZCryptoCard, JsValue> {
-        let e2 = uncompress_to_point(&self.0, &self.1)?;
-        let e1 = uncompress_to_point(&self.2, &self.3)?;
+        let e1 = uncompress_to_point(&self.0, &self.1)?;
+        let e2 = uncompress_to_point(&self.2, &self.3)?;
         Ok(ZCryptoCard(CiphertextAffineRepr::new(e1, e2)))
     }
 }

@@ -111,24 +111,11 @@ impl PlayerEnv {
     }
 
     // Synchronize the order of revealing with the order in which players play their cards.
-    pub fn sync_reveal_order(&mut self, pks: &Vec<PublicKey>) {
+    pub fn sync_reveal_order(&mut self, pks: &[PublicKey]) {
         if self.action == PlayAction::PLAY {
-            let mut reveals = vec![];
-
-            for r1 in self.reveals.iter() {
-                let mut tmp = vec![];
-                for pk in pks {
-                    for r2 in r1.iter() {
-                        if *pk == r2.2 {
-                            tmp.push(r2.clone())
-                        }
-                    }
-                }
-
-                reveals.push(tmp)
-            }
-
-            self.reveals = reveals;
+            self.reveals.iter_mut().for_each(|x| {
+                x.sort_by_key(|y| pks.iter().rev().map(|pk| *pk == y.2).collect::<Vec<_>>())
+            })
         }
     }
 

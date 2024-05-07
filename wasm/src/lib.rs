@@ -100,9 +100,9 @@ pub fn reveal_card(sk: String, card: JsValue) -> Result<JsValue, JsValue> {
     Ok(serde_wasm_bindgen::to_value(&ret)?)
 }
 
-/// unmask the card use others' reveals
+/// unmask the card use all reveals
 #[wasm_bindgen]
-pub fn unmask_card(sk: String, card: JsValue, reveals: JsValue) -> Result<usize, JsValue> {
+pub fn unmask_card(card: JsValue, reveals: JsValue) -> Result<usize, JsValue> {
     let card_wasm: CryptoCard = serde_wasm_bindgen::from_value(card)?;
     let crypto_card = card_wasm.deserialize()?;
 
@@ -111,13 +111,6 @@ pub fn unmask_card(sk: String, card: JsValue, reveals: JsValue) -> Result<usize,
     for reveal in reveals {
         reveal_cards.push(RevealCard(uncompress_to_point(&reveal.0, &reveal.1)?));
     }
-
-    let mut prng = default_prng();
-    let keypair = KeyPair::from_private_key(PrivateKey(hex_to_scalar(&sk)?));
-
-    let (reveal_card, _proof) =
-        reveal0(&mut prng, &keypair, &crypto_card.0).map_err(error_to_jsvalue)?;
-    reveal_cards.push(reveal_card);
 
     let unmasked_card = unmask(&crypto_card.0, &reveal_cards);
     let classic_card = ENCODING_CARDS_MAPPING

@@ -1,5 +1,8 @@
+use handler::init_prover_key;
+use poker_snark::build_cs::N_CARDS;
 use z4_engine::{Config, Engine};
 
+mod errors;
 mod handler;
 
 #[tokio::main]
@@ -31,6 +34,8 @@ async fn main() {
     config.games = vec![game.to_owned()];
     config.auto_stake = true;
     config.http = server;
+
+    init_prover_key(N_CARDS);
 
     Engine::<handler::PokerHandler>::init(config)
         .run()

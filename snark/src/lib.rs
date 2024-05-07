@@ -343,7 +343,7 @@ pub fn export_solidity_vk(verifier_params: &PlonkVerifierParams<KZGCommitmentSch
     content.push_str("\n");
     content.push_str(&format!("contract {} ", format!("VerifierKeyExtra2")));
     content.push_str("{\n");
-  
+
     content.push_str(&format!(
         "function PI_POLY_LAGRANGE_LOC() public returns (uint256[{}] memory) ",
         verifier_params.public_vars_constraint_indices.len()

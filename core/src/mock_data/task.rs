@@ -93,9 +93,9 @@ pub fn mock_task() -> Task {
         reveal_proofs.insert(
             card,
             vec![
+                (reveal_card_a, reveal_proof_a, alice.get_public_key()),
                 (reveal_card_b, reveal_proof_b, bob.get_public_key()),
                 (reveal_card_c, reveal_proof_c, charlie.get_public_key()),
-                (reveal_card_a, reveal_proof_a, alice.get_public_key()),
             ],
         );
     }

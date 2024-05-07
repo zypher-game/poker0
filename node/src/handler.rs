@@ -1,12 +1,13 @@
 use ark_ed_on_bn254::{EdwardsAffine, EdwardsProjective, Fr};
 use ark_ff::One;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, Validate};
+use once_cell::sync::Lazy;
 use poker_bonsai::{snark::stark_to_snark, stark::prove_bonsai};
 use poker_core::{
-    cards::{CryptoCard, ENCODING_CARDS_MAPPING},
+    cards::{ClassicCard, CryptoCard, Suite, Value, ENCODING_CARDS_MAPPING},
     play::{PlayAction, PlayerEnv},
     schnorr::PublicKey,
-    task::Task as CoreTask,
+    task::{Task as CoreTask, HAND_NUM},
     CiphertextAffine,
 };
 use poker_snark::{
@@ -15,34 +16,49 @@ use poker_snark::{
     gen_params::PROVER_PARAMS,
 };
 use rand_chacha::{rand_core::SeedableRng, ChaChaRng};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Mutex};
 use z4_engine::{
     Address, DefaultParams, Error, HandleResult, Handler, PeerId, Result, RoomId, Tasks,
 };
 use zshuffle::{
-    build_cs::{prove_shuffle, verify_shuffle},
-    gen_params::{
-        gen_shuffle_prover_params, get_shuffle_verifier_params, refresh_prover_params_public_key,
-    },
+    build_cs::prove_shuffle,
+    gen_params::{gen_shuffle_prover_params, refresh_prover_params_public_key, ProverParams},
     keygen::aggregate_keys,
     mask::*,
     Ciphertext,
 };
 
+use crate::errors::NodeError;
+
+static PARAMS: Lazy<Mutex<HashMap<usize, ProverParams>>> = Lazy::new(|| {
+    let m = HashMap::new();
+    Mutex::new(m)
+});
+
+pub fn init_prover_key(n: usize) {
+    let mut params = PARAMS.lock().unwrap();
+    if params.get(&n).is_none() {
+        let pp = gen_shuffle_prover_params(n).unwrap();
+        params.insert(n, pp);
+    }
+    drop(params);
+}
+
 pub struct PokerHandler {
-    room_id: RoomId,
-    accounts: HashMap<PeerId, PublicKey>,
-    players_hand: HashMap<PeerId, Vec<CryptoCard>>,
-    players_order: Vec<PeerId>,
-    // round_id => (turn_id => PlayerEnv)
-    players_envs: HashMap<u8, HashMap<u8, PlayerEnv>>,
+    pub room_id: RoomId,
+    pub accounts: HashMap<PeerId, PublicKey>,
+    pub first_player: usize,
+    pub players_hand: HashMap<PeerId, Vec<CryptoCard>>,
+    pub players_order: Vec<PeerId>,
+    // round_id => Vec<PlayerEnv>
+    pub players_envs: HashMap<u8, HashMap<u8, PlayerEnv>>,
 }
 
 impl PokerHandler {
     /// when game over, prove the game process and the result,
     /// use risc0 to prove the process of player,
     /// use plonk to prove the shuffle & reveal cards is corrent.
-    fn prove(&self) {
+    pub fn prove(&self) {
         let players_key = self
             .players_order
             .iter()
@@ -69,6 +85,7 @@ impl PokerHandler {
 
         let task = CoreTask {
             room_id: self.room_id as usize,
+            first_player: self.first_player,
             players_key,
             players_env,
             players_hand,
@@ -106,6 +123,7 @@ impl Handler for PokerHandler {
     type Param = DefaultParams;
 
     async fn accept(peers: &[(Address, PeerId, [u8; 32])]) -> Vec<u8> {
+        assert_eq!(peers.len(), N_PLAYS);
         let mut rng = ChaChaRng::from_entropy();
 
         let pks_affine = peers
@@ -123,25 +141,32 @@ impl Handler for PokerHandler {
         let mut deck = vec![];
         for card in ENCODING_CARDS_MAPPING.keys() {
             let card = (*card).into();
-            let (masked_card, masked_proof) = mask(&mut rng, &joint_pk, &card, &Fr::one()).unwrap();
-            verify_mask(&joint_pk, &card, &masked_card, &masked_proof).unwrap();
-
+            let (masked_card, _) = mask(&mut rng, &joint_pk, &card, &Fr::one()).unwrap();
             deck.push(masked_card)
         }
 
         assert_eq!(deck.len(), N_CARDS);
 
-        let mut prover_params = gen_shuffle_prover_params(N_CARDS).unwrap();
-        refresh_prover_params_public_key(&mut prover_params, &joint_pk).unwrap();
+        let mut params = PARAMS.lock().unwrap();
+        let prover_params = if let Some(param) = params.get_mut(&N_CARDS) {
+            param
+        } else {
+            let pp = gen_shuffle_prover_params(N_CARDS).unwrap();
+            params.insert(N_CARDS, pp);
+            params.get_mut(&N_CARDS).unwrap()
+        };
+        refresh_prover_params_public_key(prover_params, &joint_pk).unwrap();
 
-        let (proof, shuffle_deck) =
+        let (_proof, shuffle_deck) =
             prove_shuffle(&mut rng, &joint_pk, &deck, &prover_params).unwrap();
 
-        {
-            let mut verifier_params = get_shuffle_verifier_params(N_CARDS).unwrap();
-            verifier_params.verifier_params = prover_params.prover_params.verifier_params.clone();
-            verify_shuffle(&verifier_params, &deck, &shuffle_deck, &proof).unwrap();
-        }
+        // {
+        //     let mut verifier_params = get_shuffle_verifier_params(N_CARDS).unwrap();
+        //     verifier_params.verifier_params = prover_params.prover_params.verifier_params.clone();
+        //     verify_shuffle(&verifier_params, &deck, &shuffle_deck, &proof).unwrap();
+        // }
+
+        drop(params);
 
         let mut bytes = vec![];
         for c in shuffle_deck.iter() {
@@ -162,6 +187,7 @@ impl Handler for PokerHandler {
         room_id: RoomId,
     ) -> (Self, Tasks<Self>) {
         assert_eq!(peers.len(), N_PLAYS);
+
         let mut players_order = vec![];
         let accounts = peers
             .iter()
@@ -188,15 +214,15 @@ impl Handler for PokerHandler {
         }
         assert_eq!(deck.len(), N_CARDS);
 
-        let player0_hand = deck[0..17]
+        let player0_hand = deck[..HAND_NUM]
             .iter()
             .map(|x| CryptoCard(CiphertextAffine::from(*x)))
             .collect();
-        let player1_hand = deck[17..34]
+        let player1_hand = deck[HAND_NUM..2 * HAND_NUM]
             .iter()
             .map(|x| CryptoCard(CiphertextAffine::from(*x)))
             .collect();
-        let player2_hand = deck[34..]
+        let player2_hand = deck[2 * HAND_NUM..]
             .iter()
             .map(|x| CryptoCard(CiphertextAffine::from(*x)))
             .collect();
@@ -210,6 +236,7 @@ impl Handler for PokerHandler {
             Self {
                 room_id,
                 accounts,
+                first_player: N_PLAYS,
                 players_hand,
                 players_order,
                 players_envs: HashMap::new(),
@@ -219,7 +246,7 @@ impl Handler for PokerHandler {
     }
 
     /// when player connected to server, will send remain cards
-    async fn online(&mut self, player: PeerId) -> Result<HandleResult<Self::Param>> {
+    async fn online(&mut self, _player: PeerId) -> Result<HandleResult<Self::Param>> {
         // check the remain cards
         // send remain cards to player
         // broadcast the player online
@@ -227,7 +254,7 @@ impl Handler for PokerHandler {
     }
 
     /// when player offline, tell other players, then do some change in game UI
-    async fn offline(&mut self, player: PeerId) -> Result<HandleResult<Self::Param>> {
+    async fn offline(&mut self, _player: PeerId) -> Result<HandleResult<Self::Param>> {
         // broadcast the player offline
         Ok(HandleResult::default())
     }
@@ -247,19 +274,100 @@ impl Handler for PokerHandler {
             "play" => {
                 assert_eq!(params.len(), 1);
                 let btyes = params[0].as_str().unwrap();
-                let play_env: PlayerEnv = serde_json::from_str(btyes).map_err(|_| Error::Params)?;
+                let mut play_env: PlayerEnv =
+                    serde_json::from_str(btyes).map_err(|_| Error::Params)?;
+                assert_eq!(play_env.action, PlayAction::PLAY);
                 assert!(play_env.verify_sign(public_key).is_ok());
 
-                let round_info = self
-                    .players_envs
-                    .entry(play_env.round_id)
-                    .or_insert(HashMap::new());
-                round_info
-                    .entry(play_env.turn_id)
-                    .or_insert(play_env.clone());
+                let ordered_key = self
+                    .players_order
+                    .iter()
+                    .map(|x| self.accounts.get(x).unwrap().clone())
+                    .collect::<Vec<_>>();
+                play_env.sync_reveal_order(&ordered_key);
 
-                assert_eq!(play_env.action, PlayAction::PLAY);
-                let play_crypto_cards = play_env.play_crypto_cards.unwrap().to_vec();
+                let current_round = self.players_envs.len() as u8;
+
+                match play_env.round_id.cmp(&current_round) {
+                    std::cmp::Ordering::Less => {
+                        process_error_response(
+                            &mut results,
+                            player,
+                            &NodeError::PlayRoundError.to_string(),
+                        );
+                        return Ok(results);
+                    }
+                    std::cmp::Ordering::Equal => {
+                        let round_info = self
+                            .players_envs
+                            .entry(play_env.round_id)
+                            .or_insert(HashMap::new());
+                        let mut sorted_keys: Vec<_> = round_info.keys().cloned().collect();
+                        sorted_keys.sort_by(|a, b| b.cmp(a));
+
+                        let round_over = (!round_info.is_empty())
+                            && sorted_keys
+                                .iter()
+                                .take(N_PLAYS - 1)
+                                .all(|&k| round_info[&k].action != PlayAction::PLAY)
+                            && round_info.iter().any(|x| x.1.action == PlayAction::PLAY);
+
+                        if round_over {
+                            process_error_response(
+                                &mut results,
+                                player,
+                                &NodeError::RoundOverError.to_string(),
+                            );
+                            return Ok(results);
+                        }
+                    }
+                    std::cmp::Ordering::Greater => {
+                        let previous_round = self.players_envs.get(&current_round).unwrap();
+                        let mut sorted_keys: Vec<_> = previous_round.keys().cloned().collect();
+                        sorted_keys.sort_by(|a, b| b.cmp(a));
+
+                        let round_over = (!previous_round.is_empty())
+                            && previous_round
+                                .iter()
+                                .any(|x| x.1.action == PlayAction::PLAY);
+
+                        let round_info = self
+                            .players_envs
+                            .entry(play_env.round_id)
+                            .or_insert(HashMap::new());
+
+                        let round_over = round_over
+                            && sorted_keys
+                                .iter()
+                                .take(N_PLAYS - 1)
+                                .all(|&k| round_info[&k].action != PlayAction::PLAY);
+
+                        if !round_over || !round_info.is_empty() {
+                            process_error_response(
+                                &mut results,
+                                player,
+                                &NodeError::PlayRoundError.to_string(),
+                            );
+                            return Ok(results);
+                        }
+                    }
+                }
+
+                let classic = play_env.play_classic_cards.clone().unwrap();
+                assert!(classic.check_format());
+
+                if self.first_player == N_PLAYS {
+                    if !classic.contains(&ClassicCard::new(Value::Three, Suite::Heart)) {
+                        process_error_response(
+                            &mut results,
+                            player,
+                            &NodeError::PlayFirstError.to_string(),
+                        );
+                        return Ok(results);
+                    }
+                }
+
+                let play_crypto_cards = play_env.play_crypto_cards.clone().unwrap().to_vec();
                 let hand = self.players_hand.get_mut(&player).unwrap();
                 let hand_len = hand.len();
                 let play_len = play_crypto_cards.len();
@@ -271,18 +379,6 @@ impl Handler for PokerHandler {
                 let remainder_len = hand.len();
                 assert_eq!(hand_len - play_len, remainder_len);
 
-                // todo check card rule
-
-                let classic = play_env.play_classic_cards.unwrap().to_bytes();
-                process_play_response(&mut results, player, classic);
-            }
-
-            "pass" => {
-                assert_eq!(params.len(), 1);
-                let btyes = params[0].as_str().unwrap();
-                let play_env: PlayerEnv = serde_json::from_str(btyes).map_err(|_| Error::Params)?;
-                assert!(play_env.verify_sign(public_key).is_ok());
-
                 let round_info = self
                     .players_envs
                     .entry(play_env.round_id)
@@ -291,9 +387,37 @@ impl Handler for PokerHandler {
                     .entry(play_env.turn_id)
                     .or_insert(play_env.clone());
 
+                process_play_response(&mut results, player, classic.to_bytes());
+            }
+
+            "pass" => {
+                assert_eq!(params.len(), 1);
+                let btyes = params[0].as_str().unwrap();
+                let play_env: PlayerEnv = serde_json::from_str(btyes).map_err(|_| Error::Params)?;
                 assert_eq!(play_env.action, PlayAction::PAAS);
+                assert!(play_env.verify_sign(public_key).is_ok());
+
+                let round_info = self
+                    .players_envs
+                    .entry(play_env.round_id)
+                    .or_insert(HashMap::new());
+                round_info.entry(play_env.turn_id).or_insert(play_env);
 
                 process_pass_response(&mut results, player);
+            }
+
+            "revealRequest" => {
+                assert_eq!(params.len(), 4);
+                process_reveal_request(&mut results, player, params);
+            }
+
+            "revealResponse" => {
+                // vec![peerId, crypto_card, reveal_card, reveal_proof, public_key]
+                assert_eq!(params.len(), 5);
+                let peer_id = params[0].as_array().unwrap();
+                let peer_id: Vec<u8> = peer_id.iter().map(|x| x.as_u64().unwrap() as u8).collect();
+                let peer_id = PeerId(peer_id.try_into().unwrap());
+                process_reveal_response(&mut results, peer_id, &params[1..]);
             }
 
             _ => unimplemented!(),
@@ -318,20 +442,43 @@ fn process_pass_response(results: &mut HandleResult<DefaultParams>, pid: PeerId)
     results.add_all("pass", DefaultParams(vec![pid.0.to_vec().into()]));
 }
 
+fn process_reveal_request(
+    results: &mut HandleResult<DefaultParams>,
+    pid: PeerId,
+    reveal_card: Vec<serde_json::Value>,
+) {
+    results.add_all(
+        "revealRequest",
+        DefaultParams(vec![pid.0.to_vec().into(), reveal_card.into()]),
+    );
+}
+
+fn process_reveal_response(
+    results: &mut HandleResult<DefaultParams>,
+    pid: PeerId,
+    reveal_proof: &[serde_json::Value],
+) {
+    results.add_one(pid, "revealResponse", DefaultParams(reveal_proof.to_vec()));
+}
+
+fn process_error_response(results: &mut HandleResult<DefaultParams>, pid: PeerId, error_msg: &str) {
+    results.add_one(pid, "error", DefaultParams(vec![error_msg.into()]));
+}
+
 #[cfg(test)]
 mod test {
-    use ark_ec::CurveGroup;
     use ark_ed_on_bn254::EdwardsProjective;
     use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
-    use poker_core::{cards::ENCODING_CARDS_MAPPING, schnorr::KeyPair};
+    use poker_core::{
+        cards::{reveal0, unmask, verify_reveal0, ENCODING_CARDS_MAPPING},
+        schnorr::KeyPair,
+    };
+    use poker_snark::build_cs::N_CARDS;
     use rand_chacha::{rand_core::SeedableRng, ChaChaRng};
     use z4_engine::{Address, Handler, PeerId};
-    use zshuffle::{
-        reveal::{reveal, unmask, verify_reveal},
-        Ciphertext,
-    };
+    use zshuffle::Ciphertext;
 
-    use super::PokerHandler;
+    use super::{init_prover_key, PokerHandler};
 
     #[test]
     fn t() {}
@@ -381,32 +528,47 @@ mod test {
             ),
         ];
 
+        init_prover_key(N_CARDS);
         let deck = PokerHandler::accept(&peers).await;
 
         let mut last_deck = vec![];
         for x in deck.chunks(64) {
             let e1 = EdwardsProjective::deserialize_compressed(&x[..32]).unwrap();
             let e2 = EdwardsProjective::deserialize_compressed(&x[32..]).unwrap();
-
-            last_deck.push(Ciphertext::new(e1, e2));
+            let card = Ciphertext::new(e1, e2);
+            last_deck.push(card.into());
         }
 
-        let alice_z: zshuffle::keygen::Keypair = keypair_a.clone().into();
-        let bob_z: zshuffle::keygen::Keypair = keypair_b.clone().into();
-        let charlie_z: zshuffle::keygen::Keypair = keypair_c.clone().into();
-
         for card in last_deck.iter() {
-            let (reveal_card_a, reveal_proof_a) = reveal(&mut rng, &alice_z, card).unwrap();
-            let (reveal_card_b, reveal_proof_b) = reveal(&mut rng, &bob_z, card).unwrap();
-            let (reveal_card_c, reveal_proof_c) = reveal(&mut rng, &charlie_z, card).unwrap();
+            let (reveal_card_a, reveal_proof_a) = reveal0(&mut rng, &keypair_a, card).unwrap();
+            let (reveal_card_b, reveal_proof_b) = reveal0(&mut rng, &keypair_b, card).unwrap();
+            let (reveal_card_c, reveal_proof_c) = reveal0(&mut rng, &keypair_c, card).unwrap();
 
-            verify_reveal(&alice_z.public, &card, &reveal_card_a, &reveal_proof_a).unwrap();
-            verify_reveal(&bob_z.public, &card, &reveal_card_b, &reveal_proof_b).unwrap();
-            verify_reveal(&charlie_z.public, &card, &reveal_card_c, &reveal_proof_c).unwrap();
+            verify_reveal0(
+                &keypair_a.get_public_key(),
+                &card,
+                &reveal_card_a,
+                &reveal_proof_a,
+            )
+            .unwrap();
+            verify_reveal0(
+                &keypair_b.get_public_key(),
+                &card,
+                &reveal_card_b,
+                &reveal_proof_b,
+            )
+            .unwrap();
+            verify_reveal0(
+                &keypair_c.get_public_key(),
+                &card,
+                &reveal_card_c,
+                &reveal_proof_c,
+            )
+            .unwrap();
 
             let reveals = vec![reveal_card_a, reveal_card_b, reveal_card_c];
-            let unmask = unmask(&card, &reveals).unwrap();
-            let classic = ENCODING_CARDS_MAPPING.get(&unmask.into_affine()).unwrap();
+            let unmask = unmask(&card, &reveals);
+            let classic = ENCODING_CARDS_MAPPING.get(&unmask.0).unwrap();
             println!("{:?}", classic);
         }
     }
