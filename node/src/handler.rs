@@ -1,5 +1,6 @@
+use ark_ec::AffineRepr;
 use ark_ed_on_bn254::{EdwardsAffine, EdwardsProjective, Fr};
-use ark_ff::One;
+use ark_ff::{BigInteger, One, PrimeField};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, Validate};
 use once_cell::sync::Lazy;
 use poker_bonsai::{snark::stark_to_snark, stark::prove_bonsai};
@@ -16,6 +17,7 @@ use poker_snark::{
     gen_params::PROVER_PARAMS,
 };
 use rand_chacha::{rand_core::SeedableRng, ChaChaRng};
+use serde_json::Map;
 use std::{collections::HashMap, sync::Mutex};
 use z4_engine::{
     Address, DefaultParams, Error, HandleResult, Handler, PeerId, Result, RoomId, Tasks,
@@ -52,6 +54,10 @@ pub struct PokerHandler {
     pub players_order: Vec<PeerId>,
     // round_id => Vec<PlayerEnv>
     pub players_envs: HashMap<u8, HashMap<u8, PlayerEnv>>,
+
+    pub round_id: u8,
+    pub turn_id: u8,
+    pub reveal_info: HashMap<String, Vec<serde_json::Value>>,
 }
 
 impl PokerHandler {
@@ -189,7 +195,7 @@ impl Handler for PokerHandler {
         shuffle_decks: Vec<u8>,
         room_id: RoomId,
     ) -> (Self, Tasks<Self>) {
-        println!("Begin Handler Create :{}",room_id);
+        println!("Begin Handler Create :{}", room_id);
 
         assert_eq!(peers.len(), N_PLAYS);
 
@@ -237,7 +243,6 @@ impl Handler for PokerHandler {
         players_hand.insert(peers[1].1, player1_hand);
         players_hand.insert(peers[2].1, player2_hand);
 
-
         println!("Fininsh Handler Create");
 
         (
@@ -248,22 +253,67 @@ impl Handler for PokerHandler {
                 players_hand,
                 players_order,
                 players_envs: HashMap::new(),
+                round_id: 0,
+                turn_id: 0,
+                reveal_info: HashMap::new(),
             },
             Default::default(),
         )
     }
 
     /// when player connected to server, will send remain cards
-    async fn online(&mut self, _player: PeerId) -> Result<HandleResult<Self::Param>> {
-        // check the remain cards
-        // send remain cards to player
-        // broadcast the player online
-        Ok(HandleResult::default())
+    async fn online(&mut self, player: PeerId) -> Result<HandleResult<Self::Param>> {
+        let mut hand: Map<String, serde_json::Value> = Map::new();
+        let mut reveal_info: Map<String, serde_json::Value> = Map::new();
+        for (k, v) in self.players_hand.iter() {
+            let ks = k.to_hex();
+            let vs: Vec<serde_json::Value> = v
+                .iter()
+                .enumerate()
+                .map(|(i, x)| {
+                    let e1 = point_to_hex(&x.0.e1);
+                    let e2 = point_to_hex(&x.0.e1);
+                    let r = vec![e1.0, e1.1, e2.0, e2.1];
+
+                    let rk: String = r.iter().flat_map(|x| x.chars()).collect();
+                    match self.reveal_info.get(&rk) {
+                        Some(info) => reveal_info.insert(i.to_string(), info.to_vec().into()),
+                        None => reveal_info.insert(i.to_string(), serde_json::Value::Null),
+                    };
+
+                    r.into()
+                })
+                .collect();
+            hand.insert(ks, vs.into());
+        }
+
+        let player_order: Vec<_> = self.players_order.iter().map(|x| x.to_hex()).collect();
+
+        let mut game_info: Map<String, serde_json::Value> = Map::new();
+        game_info.insert("player_order".to_string(), player_order.into());
+        game_info.insert("room_id".to_string(), self.room_id.into());
+        game_info.insert("round_id".to_string(), self.round_id.into());
+        game_info.insert("turn_id".to_string(), self.turn_id.into());
+        game_info.insert("first_player".to_string(), self.first_player.into());
+        game_info.insert("online_player".to_string(), player.0.to_vec().into());
+
+        let mut results = HandleResult::default();
+        results.add_all(
+            "online",
+            DefaultParams(vec![hand.into(), game_info.into(), reveal_info.into()]),
+        );
+
+
+        Ok(results)
     }
 
     /// when player offline, tell other players, then do some change in game UI
-    async fn offline(&mut self, _player: PeerId) -> Result<HandleResult<Self::Param>> {
-        // broadcast the player offline
+    async fn offline(&mut self, player: PeerId) -> Result<HandleResult<Self::Param>> {
+        let mut results = HandleResult::default();
+        results.add_all(
+            "offline",
+            DefaultParams(vec![player.0.to_vec().into()]),
+        );
         Ok(HandleResult::default())
     }
 
@@ -282,7 +332,6 @@ impl Handler for PokerHandler {
 
         match method {
             "play" => {
-
                 println!(" Handler play");
 
                 assert_eq!(params.len(), 1);
@@ -392,13 +441,18 @@ impl Handler for PokerHandler {
                 let remainder_len = hand.len();
                 assert_eq!(hand_len - play_len, remainder_len);
 
+                let round_id = play_env.round_id;
+
                 let round_info = self
                     .players_envs
                     .entry(play_env.round_id)
                     .or_insert(HashMap::new());
                 round_info
                     .entry(play_env.turn_id)
-                    .or_insert(play_env.clone());
+                    .or_insert(play_env);
+
+                 self.round_id = round_id;
+                 self.turn_id = round_info.len() as u8;
 
                 process_play_response(&mut results, player, classic.to_bytes());
 
@@ -414,11 +468,15 @@ impl Handler for PokerHandler {
                 assert_eq!(play_env.action, PlayAction::PAAS);
                 assert!(play_env.verify_sign(public_key).is_ok());
 
+                self.round_id = play_env.round_id;
+
                 let round_info = self
                     .players_envs
                     .entry(play_env.round_id)
                     .or_insert(HashMap::new());
                 round_info.entry(play_env.turn_id).or_insert(play_env);
+
+                self.turn_id = round_info.len() as u8;
 
                 process_pass_response(&mut results, player);
 
@@ -426,25 +484,37 @@ impl Handler for PokerHandler {
             }
 
             "revealRequest" => {
-                println!("Handler revealRequest:{:?}",params);
+                println!("Handler revealRequest:{:?}", params);
 
-                assert_eq!(params.len(), 4);
+                assert!(params.len() <= N_CARDS);
                 process_reveal_request(&mut results, player, params);
 
                 println!("Finish Handler revealRequest ");
             }
 
             "revealResponse" => {
-                println!("Handler revealResponse :{:?}",params);
+                println!("Handler revealResponse :{:?}", params);
 
-                // vec![peerId, crypto_card, reveal_card, reveal_proof, public_key]
-                assert_eq!(params.len(), 5);
+                // vec![peerId, vec![crypto_card, reveal_card, reveal_proof, public_key]]
+                assert!(params.len() == 2);
+
                 let peer_id = params[0].as_array().unwrap();
                 let peer_id: Vec<u8> = peer_id.iter().map(|x| x.as_u64().unwrap() as u8).collect();
                 let peer_id = PeerId(peer_id.try_into().unwrap());
+
+                let reveal_info = params[1].as_array().unwrap();
+                for r in reveal_info.iter() {
+                    let vec = r.as_array().unwrap();
+
+                    let c = vec[0].as_array().unwrap();
+                    let c: String = c.iter().flat_map(|x| x.as_str().unwrap().chars()).collect();
+
+                    self.reveal_info.entry(c).or_insert(vec.to_vec());
+                }
+
                 process_reveal_response(&mut results, peer_id, &params[1..]);
 
-                println!("Finish Handler revealResponse ");
+                println!("Finish Handler revealResponse");
             }
 
             _ => unimplemented!(),
@@ -492,6 +562,15 @@ fn process_error_response(results: &mut HandleResult<DefaultParams>, pid: PeerId
     results.add_one(pid, "error", DefaultParams(vec![error_msg.into()]));
 }
 
+pub fn point_to_hex(point: &EdwardsAffine) -> (String, String) {
+    let (x, y) = point.xy().unwrap();
+    let x_bytes = x.into_bigint().to_bytes_be();
+    let y_bytes = y.into_bigint().to_bytes_be();
+    let x = hex::encode(&x_bytes);
+    let y = hex::encode(&y_bytes);
+    (format!("0x{}", x), format!("0x{}", y))
+}
+
 #[cfg(test)]
 mod test {
     use ark_ed_on_bn254::EdwardsProjective;
@@ -509,6 +588,7 @@ mod test {
 
     #[test]
     fn t() {
+
     }
 
     #[tokio::test]
