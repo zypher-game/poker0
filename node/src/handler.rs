@@ -123,6 +123,7 @@ impl Handler for PokerHandler {
     type Param = DefaultParams;
 
     async fn accept(peers: &[(Address, PeerId, [u8; 32])]) -> Vec<u8> {
+        println!("Begin Handler Accept");
         assert_eq!(peers.len(), N_PLAYS);
         let mut rng = ChaChaRng::from_entropy();
 
@@ -178,6 +179,8 @@ impl Handler for PokerHandler {
             bytes.extend(e2);
         }
 
+        println!("Finish Handler Accept: {}", bytes.len());
+
         bytes
     }
 
@@ -186,6 +189,8 @@ impl Handler for PokerHandler {
         shuffle_decks: Vec<u8>,
         room_id: RoomId,
     ) -> (Self, Tasks<Self>) {
+        println!("Begin Handler Create :{}",room_id);
+
         assert_eq!(peers.len(), N_PLAYS);
 
         let mut players_order = vec![];
@@ -232,6 +237,9 @@ impl Handler for PokerHandler {
         players_hand.insert(peers[1].1, player1_hand);
         players_hand.insert(peers[2].1, player2_hand);
 
+
+        println!("Fininsh Handler Create");
+
         (
             Self {
                 room_id,
@@ -265,6 +273,8 @@ impl Handler for PokerHandler {
         method: &str,
         params: DefaultParams,
     ) -> Result<HandleResult<Self::Param>> {
+        println!(" Handler interface :{}", method);
+
         let public_key = self.accounts.get(&player).ok_or(Error::NoPlayer)?;
         let params = params.0;
 
@@ -272,6 +282,9 @@ impl Handler for PokerHandler {
 
         match method {
             "play" => {
+
+                println!(" Handler play");
+
                 assert_eq!(params.len(), 1);
                 let btyes = params[0].as_str().unwrap();
                 let mut play_env: PlayerEnv =
@@ -388,9 +401,13 @@ impl Handler for PokerHandler {
                     .or_insert(play_env.clone());
 
                 process_play_response(&mut results, player, classic.to_bytes());
+
+                println!("Finish Handler play");
             }
 
             "pass" => {
+                println!(" Handler pass");
+
                 assert_eq!(params.len(), 1);
                 let btyes = params[0].as_str().unwrap();
                 let play_env: PlayerEnv = serde_json::from_str(btyes).map_err(|_| Error::Params)?;
@@ -404,20 +421,30 @@ impl Handler for PokerHandler {
                 round_info.entry(play_env.turn_id).or_insert(play_env);
 
                 process_pass_response(&mut results, player);
+
+                println!("Finish Handler pass");
             }
 
             "revealRequest" => {
+                println!("Handler revealRequest:{:?}",params);
+
                 assert_eq!(params.len(), 4);
                 process_reveal_request(&mut results, player, params);
+
+                println!("Finish Handler revealRequest ");
             }
 
             "revealResponse" => {
+                println!("Handler revealResponse :{:?}",params);
+
                 // vec![peerId, crypto_card, reveal_card, reveal_proof, public_key]
                 assert_eq!(params.len(), 5);
                 let peer_id = params[0].as_array().unwrap();
                 let peer_id: Vec<u8> = peer_id.iter().map(|x| x.as_u64().unwrap() as u8).collect();
                 let peer_id = PeerId(peer_id.try_into().unwrap());
                 process_reveal_response(&mut results, peer_id, &params[1..]);
+
+                println!("Finish Handler revealResponse ");
             }
 
             _ => unimplemented!(),
@@ -475,13 +502,14 @@ mod test {
     };
     use poker_snark::build_cs::N_CARDS;
     use rand_chacha::{rand_core::SeedableRng, ChaChaRng};
-    use z4_engine::{Address, Handler, PeerId};
+    use z4_engine::{json, Address, DefaultParams, Handler, PeerId};
     use zshuffle::Ciphertext;
 
     use super::{init_prover_key, PokerHandler};
 
     #[test]
-    fn t() {}
+    fn t() {
+    }
 
     #[tokio::test]
     async fn test_accept() {
