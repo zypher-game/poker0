@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use handler::init_prover_key;
 use poker_snark::build_cs::N_CARDS;
 use z4_engine::{Config, Engine};
@@ -36,6 +38,8 @@ async fn main() {
     config.http = server;
 
     init_prover_key(N_CARDS);
+
+    println!("\nStart Time: {:?}", SystemTime::now());
 
     Engine::<handler::PokerHandler>::init(config)
         .run()

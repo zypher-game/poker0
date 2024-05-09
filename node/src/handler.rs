@@ -5,7 +5,7 @@ use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, Validate
 use once_cell::sync::Lazy;
 use poker_bonsai::{snark::stark_to_snark, stark::prove_bonsai};
 use poker_core::{
-    cards::{ClassicCard, CryptoCard, Suite, Value, ENCODING_CARDS_MAPPING},
+    cards::{ClassicCard, CryptoCard, Suite, Value, DECK, ENCODING_CARDS_MAPPING},
     play::{PlayAction, PlayerEnv},
     schnorr::PublicKey,
     task::{Task as CoreTask, HAND_NUM},
@@ -58,6 +58,7 @@ pub struct PokerHandler {
     pub round_id: u8,
     pub turn_id: u8,
     pub reveal_info: HashMap<String, Vec<serde_json::Value>>,
+    pub traces: Vec<Map<String, serde_json::Value>>,
 }
 
 impl PokerHandler {
@@ -167,12 +168,6 @@ impl Handler for PokerHandler {
         let (_proof, shuffle_deck) =
             prove_shuffle(&mut rng, &joint_pk, &deck, &prover_params).unwrap();
 
-        // {
-        //     let mut verifier_params = get_shuffle_verifier_params(N_CARDS).unwrap();
-        //     verifier_params.verifier_params = prover_params.prover_params.verifier_params.clone();
-        //     verify_shuffle(&verifier_params, &deck, &shuffle_deck, &proof).unwrap();
-        // }
-
         drop(params);
 
         let mut bytes = vec![];
@@ -225,23 +220,15 @@ impl Handler for PokerHandler {
         }
         assert_eq!(deck.len(), N_CARDS);
 
-        let player0_hand = deck[..HAND_NUM]
-            .iter()
-            .map(|x| CryptoCard(CiphertextAffine::from(*x)))
-            .collect();
-        let player1_hand = deck[HAND_NUM..2 * HAND_NUM]
-            .iter()
-            .map(|x| CryptoCard(CiphertextAffine::from(*x)))
-            .collect();
-        let player2_hand = deck[2 * HAND_NUM..]
-            .iter()
-            .map(|x| CryptoCard(CiphertextAffine::from(*x)))
-            .collect();
-
         let mut players_hand = HashMap::new();
-        players_hand.insert(peers[0].1, player0_hand);
-        players_hand.insert(peers[1].1, player1_hand);
-        players_hand.insert(peers[2].1, player2_hand);
+        for (i, x) in deck.chunks_exact(HAND_NUM).enumerate() {
+            let hand = x
+                .iter()
+                .map(|x| CryptoCard(CiphertextAffine::from(*x)))
+                .collect::<Vec<_>>();
+
+            players_hand.insert(peers[i].1, hand);
+        }
 
         println!("Fininsh Handler Create");
 
@@ -256,6 +243,7 @@ impl Handler for PokerHandler {
                 round_id: 0,
                 turn_id: 0,
                 reveal_info: HashMap::new(),
+                traces: vec![],
             },
             Default::default(),
         )
@@ -300,9 +288,13 @@ impl Handler for PokerHandler {
         let mut results = HandleResult::default();
         results.add_all(
             "online",
-            DefaultParams(vec![hand.into(), game_info.into(), reveal_info.into()]),
+            DefaultParams(vec![
+                hand.into(),
+                game_info.into(),
+                reveal_info.into(),
+                self.traces.clone().into(),
+            ]),
         );
-
 
         Ok(results)
     }
@@ -310,10 +302,7 @@ impl Handler for PokerHandler {
     /// when player offline, tell other players, then do some change in game UI
     async fn offline(&mut self, player: PeerId) -> Result<HandleResult<Self::Param>> {
         let mut results = HandleResult::default();
-        results.add_all(
-            "offline",
-            DefaultParams(vec![player.0.to_vec().into()]),
-        );
+        results.add_all("offline", DefaultParams(vec![player.0.to_vec().into()]));
         Ok(HandleResult::default())
     }
 
@@ -442,17 +431,33 @@ impl Handler for PokerHandler {
                 assert_eq!(hand_len - play_len, remainder_len);
 
                 let round_id = play_env.round_id;
+                let turn_id = play_env.turn_id;
 
                 let round_info = self
                     .players_envs
                     .entry(play_env.round_id)
                     .or_insert(HashMap::new());
-                round_info
-                    .entry(play_env.turn_id)
-                    .or_insert(play_env);
+                round_info.entry(turn_id).or_insert(play_env);
 
-                 self.round_id = round_id;
-                 self.turn_id = round_info.len() as u8;
+                self.round_id = round_id;
+                self.turn_id = turn_id;
+
+                let classic_index = round_info
+                    .get(&turn_id)
+                    .cloned()
+                    .unwrap()
+                    .play_classic_cards
+                    .unwrap()
+                    .to_vec()
+                    .iter()
+                    .map(|x| DECK.iter().position(|y| x == y).unwrap())
+                    .collect::<Vec<_>>();
+
+                let mut trace = Map::new();
+                trace.insert("action".to_string(), "play".into());
+                trace.insert("cards".to_string(), classic_index.into());
+                trace.insert("player".to_string(), player.0.to_vec().into());
+                self.traces.push(trace);
 
                 process_play_response(&mut results, player, classic.to_bytes());
 
@@ -477,6 +482,12 @@ impl Handler for PokerHandler {
                 round_info.entry(play_env.turn_id).or_insert(play_env);
 
                 self.turn_id = round_info.len() as u8;
+
+                let mut trace = Map::new();
+                trace.insert("action".to_string(), "paas".into());
+                trace.insert("cards".to_string(), serde_json::Value::Null);
+                trace.insert("player".to_string(), player.0.to_vec().into());
+                self.traces.push(trace);
 
                 process_pass_response(&mut results, player);
 
@@ -581,18 +592,16 @@ mod test {
     };
     use poker_snark::build_cs::N_CARDS;
     use rand_chacha::{rand_core::SeedableRng, ChaChaRng};
-    use z4_engine::{json, Address, DefaultParams, Handler, PeerId};
+    use z4_engine::{Address, Handler, PeerId};
     use zshuffle::Ciphertext;
 
     use super::{init_prover_key, PokerHandler};
 
     #[test]
-    fn t() {
-
-    }
+    fn t() {}
 
     #[tokio::test]
-    async fn test_accept() {
+    async fn test_accept_and_create() {
         let mut rng = ChaChaRng::from_seed([0u8; 32]);
 
         let keypair_a = KeyPair::sample(&mut rng);
@@ -621,23 +630,30 @@ mod test {
         let peers = vec![
             (
                 Address::default(),
-                PeerId::default(),
+                PeerId::from_hex("0x54f387596caeabf85c19c27162cb0ae9fab8f06d").unwrap(),
                 pk_a_vec.try_into().unwrap(),
             ),
             (
                 Address::default(),
-                PeerId::default(),
+                PeerId::from_hex("0x54f387596caeabf85c19c27162cb0ae9fab8f06e").unwrap(),
                 pk_b_vec.try_into().unwrap(),
             ),
             (
                 Address::default(),
-                PeerId::default(),
+                PeerId::from_hex("0x54f387596caeabf85c19c27162cb0ae9fab8f06f").unwrap(),
                 pk_c_vec.try_into().unwrap(),
             ),
         ];
 
         init_prover_key(N_CARDS);
         let deck = PokerHandler::accept(&peers).await;
+
+        let (handler, _) = PokerHandler::create(&peers, deck.clone(), 0).await;
+        let handler_deck = handler
+            .players_order
+            .iter()
+            .flat_map(|x| handler.players_hand.get(x).cloned().unwrap())
+            .collect::<Vec<_>>();
 
         let mut last_deck = vec![];
         for x in deck.chunks(64) {
