@@ -57,6 +57,7 @@ mod test {
     use std::{str::FromStr, time::Instant};
 
     #[test]
+    #[cfg(all(feature = "serialize0", feature = "deserialize0"))]
     fn stark_to_snark_test() {
         dotenv::dotenv().ok();
         let task_bytes = mock_task0();
@@ -92,6 +93,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(all(feature = "serialize0", feature = "deserialize0"))]
     fn onchain_verify_test() {
         dotenv::dotenv().ok();
         let task_bytes = mock_task0();
@@ -127,6 +129,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(all(feature = "serialize0", feature = "deserialize0"))]
     fn journal_test() {
         let journal_byte32 = mock_journal();
         // println!("{:?}",journal_byte32);

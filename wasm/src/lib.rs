@@ -100,6 +100,36 @@ pub fn reveal_card(sk: String, card: JsValue) -> Result<JsValue, JsValue> {
     Ok(serde_wasm_bindgen::to_value(&ret)?)
 }
 
+/// compute masked to revealed card and the revealed proof
+#[wasm_bindgen]
+pub fn batch_reveal_card(sk: String, card: JsValue) -> Result<JsValue, JsValue> {
+    let card_wasm: Vec<CryptoCard> = serde_wasm_bindgen::from_value(card)?;
+    let crypto_cards = card_wasm
+        .iter()
+        .map(|x| x.deserialize().unwrap())
+        .collect::<Vec<_>>();
+
+    let mut prng = default_prng();
+    let key_pair = KeyPair::from_private_key(PrivateKey(hex_to_scalar(&sk)?));
+    let mut res = vec![];
+
+    for crypto_card in crypto_cards.iter() {
+        let (reveal_card, reveal_proof) =
+            reveal0(&mut prng, &key_pair, &crypto_card.0).map_err(error_to_jsvalue)?;
+        let reveal_card_projective: EdwardsProjective = reveal_card.0.into();
+
+        let ret = RevealedCardWithProof {
+            card: point_to_uncompress(&reveal_card_projective, true),
+            proof: format!("0x{}", hex::encode(&reveal_proof.to_uncompress())),
+            public_key: point_to_hex(&key_pair.get_public_key().get_raw(), true),
+        };
+
+        res.push(ret);
+    }
+
+    Ok(serde_wasm_bindgen::to_value(&res)?)
+}
+
 /// unmask the card use all reveals
 #[wasm_bindgen]
 pub fn unmask_card(card: JsValue, reveals: JsValue) -> Result<usize, JsValue> {
@@ -121,6 +151,37 @@ pub fn unmask_card(card: JsValue, reveals: JsValue) -> Result<usize, JsValue> {
         .ok_or(error_to_jsvalue(
             "Failed to obtain the index of the classic card",
         ))
+}
+
+/// batch unmask the card use all reveals
+#[wasm_bindgen]
+pub fn batch_unmask_card(card: JsValue, reveals: JsValue) -> Result<JsValue, JsValue> {
+    let card_wasm: Vec<CryptoCard> = serde_wasm_bindgen::from_value(card)?;
+    let crypto_cards = card_wasm
+        .iter()
+        .map(|x| x.deserialize().unwrap())
+        .collect::<Vec<_>>();
+
+    let reveals: Vec<Vec<(String, String)>> = serde_wasm_bindgen::from_value(reveals)?;
+
+    assert_eq!(crypto_cards.len(), reveals.len());
+
+    let mut index = vec![];
+    for (crypto_card, reveal) in crypto_cards.iter().zip(reveals.iter()) {
+        let mut reveal_cards = vec![];
+        for r in reveal {
+            reveal_cards.push(RevealCard(uncompress_to_point(&r.0, &r.1)?));
+        }
+
+        let unmasked_card = unmask(&crypto_card.0, &reveal_cards);
+        let classic_card = ENCODING_CARDS_MAPPING
+            .get(&unmasked_card.0)
+            .ok_or(error_to_jsvalue("failed to map to classic card"))?;
+        let i = DECK.iter().position(|x| x == classic_card).unwrap();
+        index.push(i);
+    }
+
+    Ok(serde_wasm_bindgen::to_value(&index)?)
 }
 
 // create player env.

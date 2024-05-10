@@ -1,5 +1,4 @@
-use std::time::SystemTime;
-
+use chrono::Local;
 use handler::init_prover_key;
 use poker_snark::build_cs::N_CARDS;
 use z4_engine::{Config, Engine};
@@ -39,7 +38,7 @@ async fn main() {
 
     init_prover_key(N_CARDS);
 
-    println!("\nStart Time: {:?}", SystemTime::now());
+    println!("\n{}", Local::now().format("%Y/%m/%d %H:%M:%S"));
 
     Engine::<handler::PokerHandler>::init(config)
         .run()

@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 poker-methods = { workspace = true }
-poker-core = { workspace = true, features = ["serialize0", "deserialize0"]}
+poker-core = { workspace = true }
 risc0-zkvm = { workspace = true }
 bonsai-sdk = { workspace = true }
 bytemuck = "1.14"
@@ -23,3 +23,8 @@ ark-ff = { workspace = true }
 ark-bn254 = { workspace = true }
 ark-serialize = { workspace = true }
 hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
+
+[features]
+default = []
+serialize0 = ["poker-core/serialize0"]
+deserialize0 = ["poker-core/deserialize0"]

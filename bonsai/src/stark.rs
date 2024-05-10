@@ -70,6 +70,7 @@ mod test {
     use std::time::Instant;
 
     #[test]
+    #[cfg(all(feature = "serialize0", feature = "deserialize0"))]
     fn bonsai_sdk_test() {
         dotenv::dotenv().ok();
         let task_bytes = mock_task0();
