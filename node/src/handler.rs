@@ -495,7 +495,7 @@ impl Handler for PokerHandler {
                 if remainder_len == 0 {
                     println!("game over, beign prove");
                     self.prove();
-                    println!("finish beign prove");
+                    println!("finish prove");
                 }
 
                 println!("Finish Handler play");
@@ -545,22 +545,16 @@ impl Handler for PokerHandler {
 
                 // vec![peerId, vec![crypto_card, reveal_card, reveal_proof, public_key]]
                 assert!(params.len() == 2);
+                println!("Handler revealResponse");
 
                 let peer_id = params[0].as_array().unwrap();
-                let peer_id: Vec<u8> = peer_id.iter().map(|x| x.as_u64().unwrap() as u8).collect();
-                let peer_id = PeerId(peer_id.try_into().unwrap());
+                let peer_id: Vec<String> = peer_id.iter().map(|x| x.as_str().unwrap().to_string()).collect();
+                let peer_id = peer_id.iter().map(|x| PeerId::from_hex(x).unwrap() ).collect::<Vec<_>>();
 
                 let reveal_info = params[1].as_array().unwrap();
-                for r in reveal_info.iter() {
-                    let vec = r.as_array().unwrap();
-
-                    let c = vec[0].as_array().unwrap();
-                    let c: String = c.iter().flat_map(|x| x.as_str().unwrap().chars()).collect();
-
-                    self.reveal_info.entry(c).or_insert(vec.to_vec());
+                for (v,id) in reveal_info.iter().zip(peer_id.iter()) {
+                    process_reveal_response(&mut results, *id, v);
                 }
-
-                process_reveal_response(&mut results, peer_id, &params[1..]);
 
                 println!("Finish Handler revealResponse");
             }
@@ -579,7 +573,7 @@ fn process_play_response(
 ) {
     results.add_all(
         "play",
-        DefaultParams(vec![pid.0.to_vec().into(), play_cards.into()]),
+        DefaultParams(vec![pid.to_hex().into(), play_cards.into()]),
     );
 }
 
@@ -594,16 +588,16 @@ fn process_reveal_request(
 ) {
     results.add_all(
         "revealRequest",
-        DefaultParams(vec![pid.0.to_vec().into(), reveal_card]),
+        DefaultParams(vec![pid.to_hex().into(), reveal_card]),
     );
 }
 
 fn process_reveal_response(
     results: &mut HandleResult<DefaultParams>,
     pid: PeerId,
-    reveal_proof: &[serde_json::Value],
+    reveal_proof: &serde_json::Value,
 ) {
-    results.add_one(pid, "revealResponse", DefaultParams(reveal_proof.to_vec()));
+    results.add_one(pid, "revealResponse", DefaultParams(vec![reveal_proof.clone()]));
 }
 
 fn process_error_response(results: &mut HandleResult<DefaultParams>, pid: PeerId, error_msg: &str) {
@@ -635,8 +629,11 @@ mod test {
 
     use super::{init_prover_key, PokerHandler};
 
-    #[test]
-    fn t() {}
+    // #[test]
+    #[tokio::test]
+    async fn t() {
+       
+    }
 
     #[tokio::test]
     async fn test_accept_and_create() {
@@ -741,6 +738,7 @@ mod test {
     #[tokio::test]
     #[cfg(not(all(feature = "serialize0", feature = "deserialize0")))]
     async fn test_handle() {
+        println!("--1");
         use std::collections::HashMap;
         use z4_engine::DefaultParams;
 
@@ -797,7 +795,6 @@ mod test {
             bytes.extend(e2);
         }
 
-        println!("--1");
 
         let (mut handler, _) = PokerHandler::create(&peers, bytes, 1).await;
         let handler_deck = handler
@@ -807,9 +804,6 @@ mod test {
             .map(|x| x.0)
             .collect::<Vec<_>>();
         assert_eq!(handler_deck, deck_inner);
-
-        println!("--2");
-
 
         let mut i = task.first_player;
         for envs in task.players_env.iter() {
@@ -822,14 +816,10 @@ mod test {
                     poker_core::play::PlayAction::OFFLINE => unimplemented!(),
                 };
 
-                println!("-----------------------------{:?}", action);
-
                 let _ = handler
                     .handle(peer, action, DefaultParams(vec![params.into()]))
                     .await
                     .unwrap();
-
-                println!("----------------------------------------");
 
                 i = i + 1;
             }
