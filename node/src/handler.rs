@@ -291,6 +291,8 @@ impl Handler for PokerHandler {
         game_info.insert("first_player".to_string(), self.first_player.into());
         game_info.insert("online_player".to_string(), player.0.to_vec().into());
 
+        println!("reveal_info:{:?}",reveal_info.clone());
+
         let mut results = HandleResult::default();
         results.add_all(
             "online",
@@ -547,8 +549,6 @@ impl Handler for PokerHandler {
             }
 
             "revealResponse" => {
-                println!("Handler revealResponse :{:?}", params);
-
                 // vec![peerId, vec![crypto_card, reveal_card, reveal_proof, public_key]]
                 assert!(params.len() == 2);
                 println!("Handler revealResponse");
@@ -568,7 +568,11 @@ impl Handler for PokerHandler {
                     {
                         let rs = v.as_array().unwrap();
                         let hands = self.players_hand.get(id).unwrap();
-                        if rs.len() == N_CARDS && hands.len() == N_CARDS {
+
+                        println!("----------------{},{}", rs.len(), hands.len());
+
+                        if rs.len() == HAND_NUM && hands.len() == HAND_NUM {
+                            println!("----------------");
                             for (r, c) in rs.iter().zip(hands.iter()) {
                                 let map = r.as_object().unwrap();
                                 let card = map
@@ -1115,6 +1119,6 @@ mod test {
             .await
             .unwrap();
 
-    //    handler.online(peers[0].1).await;
+       handler.online(peers[0].1).await;
     }
 }
