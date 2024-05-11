@@ -307,6 +307,7 @@ impl Handler for PokerHandler {
             for k in self.players_order.iter() {
                 let ks = k.to_hex();
                 let v = hand.get(&ks).unwrap();
+
                 process_reveal_request(&mut results, *k, v.clone());
             }
 
@@ -587,11 +588,10 @@ impl Handler for PokerHandler {
                                 let r = vec![e1.0, e1.1, e2.0, e2.1];
 
                                 let rk: String = r.iter().flat_map(|x| x.chars()).collect();
-                                self.reveal_info.entry(rk).or_insert(vec![
-                                    card.into(),
-                                    proof.into(),
-                                    pk.into(),
-                                ]);
+                                let reveal_info = self.reveal_info.entry(rk).or_insert(vec![]);
+
+                                let info:Vec<serde_json::Value> = vec![card.into(), proof.into(), pk.into()];
+                                reveal_info.push(info.into())
                             }
                         }
                     }
@@ -1114,5 +1114,7 @@ mod test {
             )
             .await
             .unwrap();
+
+    //    handler.online(peers[0].1).await;
     }
 }
