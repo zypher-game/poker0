@@ -65,7 +65,7 @@ pub struct PokerHandler {
     pub traces: Vec<Map<String, serde_json::Value>>,
     pub connected_players: HashSet<PeerId>,
     pub has_reveal: bool,
-    pub revealed: Vec<PeerId>,
+    pub revealed: HashSet<PeerId>,
 }
 
 impl PokerHandler {
@@ -253,7 +253,7 @@ impl Handler for PokerHandler {
                 traces: vec![],
                 connected_players: HashSet::new(),
                 has_reveal: false,
-                revealed: vec![],
+                revealed: HashSet::new(),
             },
             Default::default(),
         )
@@ -262,9 +262,11 @@ impl Handler for PokerHandler {
     /// when player connected to server, will send remain cards
     async fn online(&mut self, player: PeerId) -> Result<HandleResult<Self::Param>> {
         let mut hand: Map<String, serde_json::Value> = Map::new();
-        let mut reveal_info = vec![];
+        let mut reveal_info: Map<String, serde_json::Value> = Map::new();
         for (k, v) in self.players_hand.iter() {
             let ks = k.to_hex();
+            let mut tmp_reveal = vec![];
+
             let vs: Vec<serde_json::Value> = v
                 .iter()
                 .map(|x| {
@@ -274,14 +276,15 @@ impl Handler for PokerHandler {
 
                     let rk: String = r.iter().flat_map(|x| x.chars()).collect();
                     match self.reveal_info.get(&rk) {
-                        Some(info) => reveal_info.push(info.to_vec().into()),
-                        None => reveal_info.push(serde_json::Value::Null),
+                        Some(info) => tmp_reveal.push(info.to_vec().into()),
+                        None => tmp_reveal.push(serde_json::Value::Null),
                     };
 
                     r.into()
                 })
                 .collect();
-            hand.insert(ks, vs.into());
+            hand.insert(ks.clone(), vs.into());
+            reveal_info.insert(ks, tmp_reveal.into());
         }
 
         let player_order: Vec<_> = self.players_order.iter().map(|x| x.to_hex()).collect();
@@ -293,7 +296,8 @@ impl Handler for PokerHandler {
         game_info.insert("first_player".to_string(), self.first_player.into());
         game_info.insert("online_player".to_string(), player.0.to_vec().into());
 
-        println!("reveal_info:{:?}", reveal_info.clone());
+         println!("reveal_info:{:?}", reveal_info.clone());
+
 
         let mut results = HandleResult::default();
         results.add_all(
@@ -560,22 +564,29 @@ impl Handler for PokerHandler {
                     .iter()
                     .map(|x| x.as_str().unwrap().to_string())
                     .collect();
+
+                println!(
+                    "------------------------------------------------------------------{:?}",
+                    peer_id
+                );
+
                 let peer_id = peer_id
                     .iter()
                     .map(|x| PeerId::from_hex(x).unwrap())
                     .collect::<Vec<_>>();
 
                 let reveal_info = params[1].as_array().unwrap();
+
                 for (v, id) in reveal_info.iter().zip(peer_id.iter()) {
                     {
                         let rs = v.as_array().unwrap();
                         let hands = self.players_hand.get(id).unwrap();
-
                         if rs.len() == HAND_NUM
                             && hands.len() == HAND_NUM
                             && !self.revealed.contains(&player)
                         {
-                            println!("----------------");
+                            println!("-------------{},{}", rs.len(), hands.len());
+
                             for (r, c) in rs.iter().zip(hands.iter()) {
                                 let map = r.as_object().unwrap();
                                 let card = map
@@ -600,13 +611,13 @@ impl Handler for PokerHandler {
                                 let info: Vec<serde_json::Value> =
                                     vec![card.into(), proof.into(), pk.into()];
                                 reveal_info.push(info.into());
-
-                                self.revealed.push(player);
                             }
                         }
                     }
                     process_reveal_response(&mut results, *id, v);
                 }
+
+                self.revealed.insert(player);
 
                 println!("Finish Handler revealResponse");
             }
@@ -680,14 +691,17 @@ mod test {
     };
     use poker_snark::build_cs::N_CARDS;
     use rand_chacha::{rand_core::SeedableRng, ChaChaRng};
-    use z4_engine::{Address, Handler, PeerId};
+    use z4_engine::{json, Address, Handler, PeerId};
     use zshuffle::Ciphertext;
 
     use super::{init_prover_key, PokerHandler};
 
-    // #[test]
-    #[tokio::test]
-    async fn t() {}
+    #[test]
+    fn t() {
+        let x = json!([["hhe", "uuu"], ["yyy"]]);
+
+        println!("{:?}", x)
+    }
 
     #[tokio::test]
     async fn test_accept_and_create() {
@@ -939,10 +953,6 @@ mod test {
 
         let (mut handler, _) = PokerHandler::create(&peers, bytes, 1).await;
 
-        let s1 = r##"
-	       ["0x54f387596caeabf85c19c27162cb0ae9fab8f06d", "0x54f387596caeabf85c19c27162cb0ae9fab8f06e"]
-    "##;
-
         let s2 = r##"
 		[{
 				"card": ["0x2b9ff8125b3eabdb53a82b9a05f8934ec43bd4965bdcd95eb39461c03548364f", "0x08730cdb205392cb6982a6e1505c50c415094a6334a64e972b5abe96586ceb8a"],
@@ -1027,103 +1037,47 @@ mod test {
 		]
         "##;
 
-        let s3 = r##"
-		[{
-				"card": ["0x219bb11e7afef5298df198c594583f673f4eaba9959b3a37d3cb1403015fd5c6", "0x042ef864b86745c6a969c9b7040288ee3510199a9cd422848e4e7902fc0ac186"],
-				"proof": "0x2b2a72ad2255bb72f542007178c20a9657c3c6cf1d0ef3e2bdfc9d7eb2427cb519a10193e82b209f662cfeb097806c486001aceb08243a13cd60785ce795162a0e86c78b2693f1da533c1806118495a4cbbc92e2731ad10a683e6c54b1d2db3029fc3b281cc0a2dfe98ad5a715f056f0e5642c4301e4d41bf9b428bfd3c4a99a02f32208f0c1ae6ff90b59e401b1592ecf647914c9316a3a4078560098d1da80",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x124755290968c2b1e070b2556192a5a1c23aad83ee5e4a6a2e9914a45906767b", "0x228015800a6a559c6bf186cfc7bbbd2e107c77ea990eaa6af4f32a47a93b0448"],
-				"proof": "0x21f06fa54024aadee4aa227b75c37e273649e9c47b277a764eb0d5295dc2bd2d042682e8654101b3e915db60f527e157e5cb92e914a0b68103a46d4c516b8485164c41fe6c9ad7c3830d900e9a6fecc5887887a89060014829684023db8fdbaa078805fcfb40771c7cb65972ee60110ac76af884a23491554b45cce1949068e903bc9d0351bb6447aedb99ca45cbefa00312a9196e74893b1a2f97e0f141db5a",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x1bc5bc4cff42816bda74da1e46871b7ae1b5a6db552821939642667cc633ba08", "0x1db0fd2e29876e1c9183d9685849c57924080dd682ca7a8fc0ae01f5b7be5c9f"],
-				"proof": "0x1b672b8543adcae93411623d1642297a37cb96473862764f3d704c3f37be371315d61ffb87ea094ba3d2fd013eb81560aa65554a798d64064ef2097cf5dee8602ddaa68a9d8e0bb3f649bd71ae830c6b134d8f6d56f20ab579d834978102da84292dcdb0bae06c9ea7db18c1387bee75d0370e71ffb7b83252eac4df2e9d42590248b3fba095122d9c9eac3b48bc454ede3848ebdc89f942edbd326a59acaa87",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x1627c308e4a0d095694fad8243ba26934f0240744f8bd9d17c697bf7b42e616e", "0x00e30ac1b4b83c766f9c318ec87cb084b7e30cc6b6a272ad0cb0fdfaf0a39648"],
-				"proof": "0x2bbf3a0d0177afdbfb6a1f432d9fb0bd5810578124e5dd42ace7af49c15168c1073e51e830a6732b6d84a4e27a47886494603c2d880a7e3d6f3dfd1112e164110ae614655d6f9fa109aa0fc06cb962dc4f527c6e7794980b20d3345f36c7dd1101eba0d9e4ec653e6b1cfdd5391b2e07d02811800942c2754bb4cbe8b507a29702db9d1f0e32a2e901f3ca9de4c8044cc5a317da657596b2b261c68254644969",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x0a9314956fa9cf049e43e5ffc11d8f4d811737028631215134ab370fb3d92a81", "0x2f679971d984175e91bd261e0f0207b1cc9957ce8611985257520eb8a1bb1da6"],
-				"proof": "0x1f8f4ef7a6267b37d5fbdd3c41876ccd4740fb050112baf2251783d9933d111427dec7b21baf983ac880cc321df4d8080faef24aecafe3b95c265526f09881a4293f30405d5bce807b85cecaf5ed23aa5d2e2ff9a235c6bdca2890712a3bdbf8250aa1b4fb564ffcd8623c6ee9af938f7225b6105d9a5671bbc5f198acceda300271d25d77397554f5d09b8de21c4624e2dd8bfc7779e24de7d04d6e803ca8d7",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x27526d38bd995704a9263f5f6d8eb09916390cabc0e49fc10b5c50a8747f8c18", "0x2a5aa84d76f99ed1204f52fab183e04841af7707130db43092a91f0e91db1bb1"],
-				"proof": "0x0c000eb66fd9496944c6a974df82819b0e777acfcc19b34bc8196dc1b2d7c7da162240a2052a316f607d956945d9db7bd2526cc7db5e427e5b73868ad570ce4113d25c71b1a456765343ce223bc93bb89e0275c6b440484a6ca2f2f1f32df5f0079df18a0de929b79c015e0df458a20706618b74367c1a488d12ec4aeca4614503ce31109a4df0e1592106e6dbbe2c9edfbbfaf76e591e6b40241ec51dc9fc91",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x0531cdd190361864b55078893900bb6f0084a29f9d3ee75e719858d3bab3af41", "0x2e1d2ea4fc4a83c7f6fa5687856fa31eb7bbe7595fdc5854c1e864a85a14f689"],
-				"proof": "0x17fb6e5e093a9629c68644ef0fd81b64d2699dd747b12c8a2d79b268901329cf2768bb884901b08396a7be17d82763f164c580f781b49cd7db706eb6fe8e8bb2050379a6696c38185e3f72913d7cc4d2add3697fc56203b2fa9513e0483efa6f2d002772a2522b44279456f8871243685af0732b8dfc50e8a1a675533512e339051e807a188824e2cec074c48d68d36facb4256bb28305c8c7e9d481fba574fd",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x2afb4990be583df949aced7fc04fb869f411009d0923b906d35b78ee5aba70bb", "0x079cc5fb54a7ca8ee4ec09cd96dd5268f04ef79a17807d473d27434d6ecdc246"],
-				"proof": "0x1c4fa72295d0dbdf993bc89c71e3b20829c845186e1d8d7c8ca4c8ade7cf03ca13bf5257ad25f3d9074bec318885fb6d0401e05a1cdc665623befa80c3288fa2101e1398264542a67a07fef211d8f596907164d845ea1d78520f102e9c88e1a50188e12e9f59c6cd29a92087878af621d4eab1ae8d2f450cfec5e232ad4028aa01081e6c38a54f2b11c560b73193e9c6b6b60ba60310e28ba189d4598f97013e",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x27918304b5ffc917ae2af4f0f38f8094301f58458d3bea447d68c6c8a515b9e7", "0x008a5a9b3d072f1143bb05656815c62e94024a556c076bf876502a59527d3f26"],
-				"proof": "0x1317da4e1b6ab25f470ce8a7a903c63d8116ee28e5fb533d39bff7ee49e80150211443bdf0fbf931415b7816712aab3fc4317c65e32570a0c68dc8346550643027c3e514ce0828f47ef416f3cd877eada3c6a9934af18805b16ce7025cd99dfe068761c201c19402d8e9ee86d8b317da9e1ee982e380b8e92fa56e1482a54f8d04d717c199e6d7a5f82bfe6b1a8766262c159cf8fa7818131a28c24c36a28cdb",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x29b2fc630c7ea71015c02a9b1231beceee889a6f6e9d8da0b7d6e26aacbca68a", "0x23804ced100347420ce36f73185b11444e2df5a7dbcbb41b599472f190da1fd8"],
-				"proof": "0x10c050e4894c331c6203930877e7e08be46bac96963cfb7578b72b4e0d9b41fc059dc63b6183048f35533dda739e4113642467609a1d8bae645e03b00d3648442c2881fbf2e7f0a43f30807d20b49e791a3ebdbe5f6c44ae416a0d082b9f686419cc4bab97db1dafbb9f3de3ef2974b4f6f7dc974afd889d09dcc597703ff371031d44a6ce4bee738cf8e513d3a3e25e38da44cc1705222b2873f30c063ba732",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x227975a9ed00b47a1a32d8b923f87bbb745fca3b1cad0dd338ddbdc4608e6799", "0x15a86aaa52ca0edac216fd0090255723f9b6f9712cf8cef321935fada4c7e443"],
-				"proof": "0x10deaf516271aab869dd6df336f007bc89cf45ed5ffe30f59d1d908e16abd83501f06e9b0c41d8416af4705e11c40b36685563d26b251cb55ea075808b96d4c71b6c8e6aec6ccf5119fb452e60b13a856472952c36d4b27edf1abc99145f354c0868fe64bf4bd0a450fc6d928724f56f156425d7fc585361874cbf0ba9581520030e888d40afa394e0d77ec437c5556255b4ccb00a0a06364c67c5b8176821c1",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x1a0d87db0c8626d3a2b82c052e346ad3fd910fdcfc42e0c5039e94a5af08f55f", "0x1cb479eddd053e699f871c8013e65b1556d690401bba593e23483aedb66c3c5c"],
-				"proof": "0x0d77401900d8b2a125ee051fef62f5165fc5a45896e4529bf0f127f4aa8ca8e110b6f3ab22f0402ffbf40172aec4f4b3f07db455a5b76dfcb4a94a9faedde68517d81bf0efe08a3f24316d3baf2704af8787a4e1e0dae99c5d6a4a26d8323dbc13f732463b27ee9ab6425a97d20d030ffd7fe9905de1d9b50d8576686cd6000e0560f650eb20838f314a62847203232cb4b6c59696e92d0a9a6149f0808c43eb",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x245264d3a277e7a8314f60f11f0dbb7d64329d723395d802cb4e7524d6e00cdb", "0x1a5e81e257c68dc251ebb54a88db0899e33427495f2d62c5dffee341f1beaa28"],
-				"proof": "0x05addc2eb9aa90304c8cad00d872a1d99ffd53ae925f3750a3cd9b6108c92f7f12fa2d9bc3c638087277446a558bbe9ff095d8798e4472f1dffb6cbd07413644121773a26cbab3f316f2f4527de369138e9b92ca8b1d8cb49e1017a9d412062720476ce65b77b20ba88cc328ee6883a2abbbdce1b45740edfd8508f138976ded02d8cb3d8a6bb14fc2735ce4a0fafc0c2fdb8dfacfef64f19bf2bb39ec4133bf",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x02419782858a2cfe278f5b568c2c23f07000907958fb27e727898d5fecfbbd14", "0x0381103ebf984ebd3b1016bb103a9eea5d57888ed00765e77a096bb9bcf2f2f4"],
-				"proof": "0x0a115b8a3a94f20099b60092a95475e4c1198bad4c17f016fb1d2df35af757631f90457a053518f1585e9b2f74eea6ffc98273612d2a2ba273c7df0f3280c0dc00d0fcd137d432c6576640cf63b996c245ba504cdbcf71a70bcfe4aef70a6f9025bbbacec5e3e45bbc5aebaa3e6bde6697c20d2ecde675cf7b6a5205f2f43faf04cba2b71fd123f2523cbf5d8d7660e8c1c8e07b81c25520e4284b5d1442b583",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x2228c1f985e3985d7c262562ea9fd5104370a498f4f928f9ec6ba36869eaff83", "0x0d705ab8ff7eb4ffd24e03f823bf34518b62faa29522ec91e17a5481da1b6344"],
-				"proof": "0x0ac1f628f5b374050027097171e747616b4db25f59b9a70d3dac220e2a13221723a6e96e54b95af9289d2b2740621d9e3361aa1229999844ff43e5dfaaa481d7176a8e7f01f1e656049e96035d4e45d8853d20eeeca8755691b292467650f3c00f0c06c9860094c74d111decff8edcde022432bc8e3258583fbd3da2918c6770022b3d4c2e7a8442300c2ac65a8f4d3ecef05a9a2c3a02347b9e1ee6af880d0c",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			},
-			{
-				"card": ["0x15ec654fa7fe56c3eaf0b466faae569c6d8f2e5f014ac1d48cde85f5401b5f64", "0x181a46c766a90f9cc72900b01f8cc38e46ce65e7e612877107c4bf8bfb65bdf5"],
-				"proof": "0x22d6ea251679b927e661f01a44cae572207cbf8007989a44f533c8e25edd8873259611f4b13ddf653683d21cc722d513bf4835ba584190d1564dc77ea98b545a0a6678ef9073224f08e30054023f3dc1e71e46c14224437a3c956ecfe2b24c1121913ea001b07c9cfd5f92c86604dc3fb537aaf3d0ade16bc09a241d2323f8b202dd5a816c449733ae6a0cd865850a1f05f48a078ebf83231d6cabe6feb86914",
-				"public_key": "0x61084c5410e02d9019817eba8bb41b70137f6c519c65f59e9d02bcfcdde95629"
-			}
-		]
-        "##;
-
-        let s1 = serde_json::Value::from_str(&s1).unwrap();
+        let s1_1 = json!(vec![
+            "0x54f387596caeabf85c19c27162cb0ae9fab8f06e",
+            "0x54f387596caeabf85c19c27162cb0ae9fab8f06f"
+        ]);
+        let s1_2 = json!(vec![
+            "0x54f387596caeabf85c19c27162cb0ae9fab8f06d",
+            "0x54f387596caeabf85c19c27162cb0ae9fab8f06f"
+        ]);
+        let s1_3 = json!(vec![
+            "0x54f387596caeabf85c19c27162cb0ae9fab8f06d",
+            "0x54f387596caeabf85c19c27162cb0ae9fab8f06e"
+        ]);
         let s2 = serde_json::Value::from_str(&s2).unwrap();
-        let s3 = serde_json::Value::from_str(&s3).unwrap();
 
         handler
             .handle(
                 peers[0].1,
                 "revealResponse",
-                DefaultParams(vec![s1.into(), vec![s2, s3].into()]),
+                DefaultParams(vec![s1_1, vec![s2.clone(), s2.clone()].into()]),
             )
             .await
             .unwrap();
 
-        handler.online(peers[0].1).await;
+        handler
+            .handle(
+                peers[1].1,
+                "revealResponse",
+                DefaultParams(vec![s1_2, vec![s2.clone(), s2.clone()].into()]),
+            )
+            .await
+            .unwrap();
+
+        handler
+            .handle(
+                peers[2].1,
+                "revealResponse",
+                DefaultParams(vec![s1_3, vec![s2.clone(), s2.clone()].into()]),
+            )
+            .await
+            .unwrap();
+
+        let _ = handler.online(peers[0].1).await;
     }
 }
