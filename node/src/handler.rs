@@ -65,6 +65,7 @@ pub struct PokerHandler {
     pub traces: Vec<Map<String, serde_json::Value>>,
     pub connected_players: HashSet<PeerId>,
     pub has_reveal: bool,
+    pub revealed: Vec<PeerId>,
 }
 
 impl PokerHandler {
@@ -252,6 +253,7 @@ impl Handler for PokerHandler {
                 traces: vec![],
                 connected_players: HashSet::new(),
                 has_reveal: false,
+                revealed: vec![],
             },
             Default::default(),
         )
@@ -291,7 +293,7 @@ impl Handler for PokerHandler {
         game_info.insert("first_player".to_string(), self.first_player.into());
         game_info.insert("online_player".to_string(), player.0.to_vec().into());
 
-        println!("reveal_info:{:?}",reveal_info.clone());
+        println!("reveal_info:{:?}", reveal_info.clone());
 
         let mut results = HandleResult::default();
         results.add_all(
@@ -569,9 +571,10 @@ impl Handler for PokerHandler {
                         let rs = v.as_array().unwrap();
                         let hands = self.players_hand.get(id).unwrap();
 
-                        println!("----------------{},{}", rs.len(), hands.len());
-
-                        if rs.len() == HAND_NUM && hands.len() == HAND_NUM {
+                        if rs.len() == HAND_NUM
+                            && hands.len() == HAND_NUM
+                            && !self.revealed.contains(&player)
+                        {
                             println!("----------------");
                             for (r, c) in rs.iter().zip(hands.iter()) {
                                 let map = r.as_object().unwrap();
@@ -594,8 +597,11 @@ impl Handler for PokerHandler {
                                 let rk: String = r.iter().flat_map(|x| x.chars()).collect();
                                 let reveal_info = self.reveal_info.entry(rk).or_insert(vec![]);
 
-                                let info:Vec<serde_json::Value> = vec![card.into(), proof.into(), pk.into()];
-                                reveal_info.push(info.into())
+                                let info: Vec<serde_json::Value> =
+                                    vec![card.into(), proof.into(), pk.into()];
+                                reveal_info.push(info.into());
+
+                                self.revealed.push(player);
                             }
                         }
                     }
@@ -921,7 +927,6 @@ mod test {
         );
 
         let deck = task.players_hand.into_iter().flatten().collect::<Vec<_>>();
-        let deck_inner = deck.iter().map(|x| x.0).collect::<Vec<_>>();
         let mut bytes = vec![];
         for c in deck.iter() {
             let mut e1 = vec![];
@@ -1119,6 +1124,6 @@ mod test {
             .await
             .unwrap();
 
-       handler.online(peers[0].1).await;
+        handler.online(peers[0].1).await;
     }
 }
