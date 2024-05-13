@@ -497,13 +497,13 @@ impl Handler for PokerHandler {
 
                 let mut trace = Map::new();
                 trace.insert("action".to_string(), "play".into());
-                trace.insert("cards".to_string(), classic_index.into());
+                trace.insert("cards".to_string(), classic_index.clone().into());
                 trace.insert("player".to_string(), player.0.to_vec().into());
                 self.traces.push(trace);
 
                 println!("Finish Handler play");
 
-                process_play_response(&mut results, player, classic.to_bytes());
+                process_play_response(&mut results, player, classic_index);
 
                 println!("remainder_len:{}", remainder_len);
                 if remainder_len == 0 {
@@ -632,7 +632,7 @@ impl Handler for PokerHandler {
 fn process_play_response(
     results: &mut HandleResult<DefaultParams>,
     pid: PeerId,
-    play_cards: Vec<u8>,
+    play_cards: Vec<usize>,
 ) {
     results.add_all(
         "play",
