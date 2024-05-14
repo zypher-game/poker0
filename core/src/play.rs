@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
 pub enum PlayAction {
-    PAAS,
+    PASS,
     PLAY,
     OFFLINE,
 }
@@ -21,7 +21,7 @@ pub enum PlayAction {
 impl From<PlayAction> for u8 {
     fn from(val: PlayAction) -> Self {
         match val {
-            PlayAction::PAAS => 0,
+            PlayAction::PASS => 0,
             PlayAction::PLAY => 1,
             PlayAction::OFFLINE => 2,
         }
@@ -61,7 +61,7 @@ impl Default for PlayerEnv {
             room_id: 0,
             turn_id: 0,
             round_id: 0,
-            action: PlayAction::PAAS,
+            action: PlayAction::PASS,
             play_classic_cards: None,
             play_crypto_cards: None,
             reveals: vec![],
@@ -284,7 +284,7 @@ mod test {
             .room_id(1)
             .round_id(1)
             .turn_id(1)
-            .action(PlayAction::PAAS)
+            .action(PlayAction::PASS)
             .build_and_sign(&key_pair, &mut prng)
             .unwrap();
 

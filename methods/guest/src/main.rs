@@ -37,7 +37,7 @@ pub fn main() {
                 .iter()
                 .rev()
                 .take(N_PLAYERS - 1)
-                .all(|x| x.action == PlayAction::PAAS));
+                .all(|x| x.action == PlayAction::PASS));
         }
 
         for (turn_id, player) in round_env.iter_mut().enumerate() {

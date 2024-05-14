@@ -198,7 +198,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(0)
         .turn_id(3)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&bob, &mut rng)
         .unwrap();
 
@@ -206,7 +206,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(0)
         .turn_id(4)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&charlie, &mut rng)
         .unwrap();
 
@@ -247,7 +247,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(1)
         .turn_id(1)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&bob, &mut rng)
         .unwrap();
 
@@ -255,7 +255,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(1)
         .turn_id(2)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&charlie, &mut rng)
         .unwrap();
 
@@ -286,7 +286,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(2)
         .turn_id(1)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&bob, &mut rng)
         .unwrap();
 
@@ -314,7 +314,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(2)
         .turn_id(3)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&alice, &mut rng)
         .unwrap();
 
@@ -322,7 +322,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(2)
         .turn_id(4)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&bob, &mut rng)
         .unwrap();
 
@@ -359,7 +359,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(3)
         .turn_id(1)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&alice, &mut rng)
         .unwrap();
 
@@ -367,7 +367,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(3)
         .turn_id(2)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&bob, &mut rng)
         .unwrap();
 
@@ -426,7 +426,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(4)
         .turn_id(4)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&alice, &mut rng)
         .unwrap();
 
@@ -434,7 +434,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(4)
         .turn_id(5)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&bob, &mut rng)
         .unwrap();
 
@@ -476,7 +476,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(5)
         .turn_id(2)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&bob, &mut rng)
         .unwrap();
 
@@ -496,7 +496,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(5)
         .turn_id(4)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&alice, &mut rng)
         .unwrap();
 
@@ -504,7 +504,7 @@ pub fn mock_task() -> Task {
         .room_id(1)
         .round_id(5)
         .turn_id(5)
-        .action(PlayAction::PAAS)
+        .action(PlayAction::PASS)
         .build_and_sign(&bob, &mut rng)
         .unwrap();
 

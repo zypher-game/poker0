@@ -239,7 +239,7 @@ pub fn create_play_env(player_env: JsValue) -> Result<String, JsValue> {
             .room_id(player_env.room_id)
             .round_id(player_env.round_id)
             .turn_id(player_env.turn_id)
-            .action(PlayAction::PAAS)
+            .action(PlayAction::PASS)
             .build_and_sign(&key_pair, &mut prng)
             .map_err(error_to_jsvalue)?,
 

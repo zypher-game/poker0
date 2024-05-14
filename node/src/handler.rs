@@ -516,12 +516,12 @@ impl Handler for PokerHandler {
             }
 
             "pass" => {
-                println!(" Handler paas");
+                println!(" Handler pass");
 
                 assert_eq!(params.len(), 1);
                 let btyes = params[0].as_str().unwrap();
                 let play_env: PlayerEnv = serde_json::from_str(btyes).map_err(|_| Error::Params)?;
-                assert_eq!(play_env.action, PlayAction::PAAS);
+                assert_eq!(play_env.action, PlayAction::PASS);
                 assert!(play_env.verify_sign(public_key).is_ok());
 
                 self.round_id = play_env.round_id;
@@ -535,7 +535,7 @@ impl Handler for PokerHandler {
                 self.turn_id = round_info.len() as u8;
 
                 let mut trace = Map::new();
-                trace.insert("action".to_string(), "paas".into());
+                trace.insert("action".to_string(), "pass".into());
                 trace.insert("cards".to_string(), serde_json::Value::Null);
                 trace.insert("player".to_string(), player.to_hex().into());
                 self.traces.push(trace);
@@ -878,7 +878,7 @@ mod test {
                 let peer = peers[i % 3].1;
                 let params = serde_json::to_string(env).unwrap();
                 let action = match env.action {
-                    poker_core::play::PlayAction::PAAS => "pass",
+                    poker_core::play::PlayAction::PASS => "pass",
                     poker_core::play::PlayAction::PLAY => "play",
                     poker_core::play::PlayAction::OFFLINE => unimplemented!(),
                 };

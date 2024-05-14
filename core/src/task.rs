@@ -86,7 +86,7 @@ impl Task {
                     .iter()
                     .rev()
                     .take(N_PLAYERS - 1)
-                    .all(|x| x.action == PlayAction::PAAS));
+                    .all(|x| x.action == PlayAction::PASS));
             }
 
             for (i, player) in round_env.iter_mut().enumerate() {
