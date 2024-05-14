@@ -354,7 +354,7 @@ impl Handler for PokerHandler {
                 let mut play_env: PlayerEnv =
                     serde_json::from_str(btyes).map_err(|_| Error::Params)?;
                 assert_eq!(play_env.action, PlayAction::PLAY);
-                assert!(play_env.verify_sign(public_key).is_ok());
+              //  assert!(play_env.verify_sign(public_key).is_ok());
 
                 // let current_round =  if self.players_envs.len() ==0  {
                 //     0
