@@ -294,7 +294,7 @@ impl Handler for PokerHandler {
         game_info.insert("round_id".to_string(), self.round_id.into());
         game_info.insert("turn_id".to_string(), self.turn_id.into());
         game_info.insert("first_player".to_string(), self.first_player.into());
-        game_info.insert("online_player".to_string(), player.0.to_vec().into());
+        game_info.insert("online_player".to_string(), player.to_hex().into());
 
          println!("reveal_info:{:?}", reveal_info.clone());
 
@@ -328,7 +328,7 @@ impl Handler for PokerHandler {
     /// when player offline, tell other players, then do some change in game UI
     async fn offline(&mut self, player: PeerId) -> Result<HandleResult<Self::Param>> {
         let mut results = HandleResult::default();
-        results.add_all("offline", DefaultParams(vec![player.0.to_vec().into()]));
+        results.add_all("offline", DefaultParams(vec![player.to_hex().into()]));
         Ok(HandleResult::default())
     }
 
@@ -498,7 +498,7 @@ impl Handler for PokerHandler {
                 let mut trace = Map::new();
                 trace.insert("action".to_string(), "play".into());
                 trace.insert("cards".to_string(), classic_index.clone().into());
-                trace.insert("player".to_string(), player.0.to_vec().into());
+                trace.insert("player".to_string(), player.to_hex().into());
                 self.traces.push(trace);
 
                 println!("Finish Handler play");
@@ -537,7 +537,7 @@ impl Handler for PokerHandler {
                 let mut trace = Map::new();
                 trace.insert("action".to_string(), "paas".into());
                 trace.insert("cards".to_string(), serde_json::Value::Null);
-                trace.insert("player".to_string(), player.0.to_vec().into());
+                trace.insert("player".to_string(), player.to_hex().into());
                 self.traces.push(trace);
 
                 process_pass_response(&mut results, player);
@@ -641,7 +641,7 @@ fn process_play_response(
 }
 
 fn process_pass_response(results: &mut HandleResult<DefaultParams>, pid: PeerId) {
-    results.add_all("pass", DefaultParams(vec![pid.0.to_vec().into()]));
+    results.add_all("pass", DefaultParams(vec![pid.to_hex().into()]));
 }
 
 fn process_reveal_request(
