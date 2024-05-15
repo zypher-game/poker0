@@ -477,6 +477,7 @@ impl Handler for PokerHandler {
                 self.continuous_pass = 0;
                 self.turn_id = self.turn_id + 1;
                 self.round_first_player = current;
+                self.round_max_deck = classic;
 
                 process_play_response(&mut results, player, classic_index);
 
@@ -555,6 +556,7 @@ impl Handler for PokerHandler {
                     self.round_id += 1;
                     self.turn_id = 0;
                     self.global_first_player = self.round_first_player;
+                    self.round_max_deck = ClassicCardCombination::default();
                 } else {
                     self.continuous_pass += 1;
                     self.turn_id += 1;
