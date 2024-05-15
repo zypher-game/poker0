@@ -6,6 +6,7 @@ use once_cell::sync::Lazy;
 use poker_bonsai::{snark::stark_to_snark, stark::prove_bonsai};
 use poker_core::{
     cards::{ClassicCard, CryptoCard, Suite, Value, DECK, ENCODING_CARDS_MAPPING},
+    combination::{ClassicCardCombination, Combination},
     left_rotate,
     play::{PlayAction, PlayerEnv},
     schnorr::PublicKey,
@@ -59,13 +60,17 @@ pub struct PokerHandler {
     // round_id => Vec<PlayerEnv>
     pub players_envs: HashMap<u8, HashMap<u8, PlayerEnv>>,
 
-    pub round_id: u8,
-    pub turn_id: u8,
+    pub round_id: usize,
+    pub turn_id: usize,
     pub reveal_info: HashMap<String, Vec<serde_json::Value>>,
     pub traces: Vec<Map<String, serde_json::Value>>,
     pub connected_players: HashSet<PeerId>,
     pub has_reveal: bool,
     pub revealed: HashSet<PeerId>,
+    pub round_max_deck: ClassicCardCombination,
+    pub round_first_player: usize,
+    pub global_first_player: usize,
+    pub continuous_pass: usize,
 }
 
 impl PokerHandler {
@@ -254,6 +259,10 @@ impl Handler for PokerHandler {
                 connected_players: HashSet::new(),
                 has_reveal: false,
                 revealed: HashSet::new(),
+                round_max_deck: ClassicCardCombination::default(),
+                round_first_player: 0,
+                global_first_player: 0,
+                continuous_pass: 0,
             },
             Default::default(),
         )
@@ -296,8 +305,7 @@ impl Handler for PokerHandler {
         game_info.insert("first_player".to_string(), self.first_player.into());
         game_info.insert("online_player".to_string(), player.to_hex().into());
 
-         println!("reveal_info:{:?}", reveal_info.clone());
-
+        println!("reveal_info:{:?}", reveal_info.clone());
 
         let mut results = HandleResult::default();
         results.add_all(
@@ -354,88 +362,49 @@ impl Handler for PokerHandler {
                 let mut play_env: PlayerEnv =
                     serde_json::from_str(btyes).map_err(|_| Error::Params)?;
                 assert_eq!(play_env.action, PlayAction::PLAY);
-              //  assert!(play_env.verify_sign(public_key).is_ok());
-
-                // let current_round =  if self.players_envs.len() ==0  {
-                //     0
-                // }else {
-                //     self.players_envs.keys().max().unwrap().to_owned()
-                // };
-
-                // match play_env.round_id.cmp(&current_round) {
-                //     std::cmp::Ordering::Less => {
-                //         println!("=l= {},{}",play_env.round_id, current_round);
-                //         process_error_response(
-                //             &mut results,
-                //             player,
-                //             &NodeError::PlayRoundError.to_string(),
-                //         );
-                //         return Ok(results);
-                //     }
-                //     std::cmp::Ordering::Equal => {
-                //         println!("=e= {},{}",play_env.round_id, current_round);
-
-                //         let round_info = self
-                //             .players_envs
-                //             .entry(play_env.round_id)
-                //             .or_insert(HashMap::new());
-                //         let mut sorted_keys: Vec<_> = round_info.keys().cloned().collect();
-                //         sorted_keys.sort_by(|a, b| b.cmp(a));
-
-                //         let round_over = (!round_info.is_empty())
-                //             && sorted_keys
-                //                 .iter()
-                //                 .take(N_PLAYS - 1)
-                //                 .all(|&k| round_info[&k].action != PlayAction::PLAY)
-                //             && round_info.iter().any(|x| x.1.action == PlayAction::PLAY);
-
-                //         if round_over {
-                //             process_error_response(
-                //                 &mut results,
-                //                 player,
-                //                 &NodeError::RoundOverError.to_string(),
-                //             );
-                //             return Ok(results);
-                //         }
-                //     }
-                //     std::cmp::Ordering::Greater => {
-                //         println!("=g= {},{}",play_env.round_id, current_round);
-
-                //         let previous_round = self.players_envs.get(&current_round).unwrap();
-                //         let mut sorted_keys: Vec<_> = previous_round.keys().cloned().collect();
-                //         sorted_keys.sort_by(|a, b| b.cmp(a));
-
-                //         let round_over = (!previous_round.is_empty())
-                //             && previous_round
-                //                 .iter()
-                //                 .any(|x| x.1.action == PlayAction::PLAY);
-
-                //          println!("over1 {},{:?}",round_over,previous_round);
-
-                //         let current = self
-                //             .players_envs
-                //             .get(&play_env.round_id);
-
-                //         let round_over = round_over
-                //             && sorted_keys
-                //                 .iter()
-                //                 .take(N_PLAYS - 1)
-                //                 .all(|&k| previous_round[&k].action != PlayAction::PLAY);
-
-                //         if !round_over || current.is_some() {
-                //             println!("great return {},{},",round_over,current.is_some());
-                //             process_error_response(
-                //                 &mut results,
-                //                 player,
-                //                 &NodeError::PlayRoundError.to_string(),
-                //             );
-                //             return Ok(results);
-                //         }
-                //     }
-                // }
+                //  assert!(play_env.verify_sign(public_key).is_ok());
 
                 let classic = play_env.play_classic_cards.clone().unwrap();
                 assert!(classic.check_format());
+
+                if classic < self.round_max_deck {
+                    println!("--------------------------------------1");
+                    process_error_response(
+                        &mut results,
+                        player,
+                        &NodeError::PlayCardError.to_string(),
+                    );
+                    return Ok(results);
+                }
+
+                if play_env.round_id as usize != self.round_id {
+                    println!(
+                        "--------------------------------------2 :{},{}",
+                        play_env.round_id, self.round_id
+                    );
+                    process_error_response(
+                        &mut results,
+                        player,
+                        &NodeError::LessRoundError.to_string(),
+                    );
+                    return Ok(results);
+                }
+
+                if play_env.turn_id as usize != self.turn_id {
+                    println!("--------------------------------------3");
+                    process_error_response(
+                        &mut results,
+                        player,
+                        &NodeError::PlayTurnError.to_string(),
+                    );
+                    return Ok(results);
+                }
+
+                let player_index = self
+                    .players_order
+                    .iter()
+                    .position(|x| *x == player)
+                    .unwrap();
 
                 if self.first_player == N_PLAYS {
                     if !classic.contains(&ClassicCard::new(Value::Three, Suite::Heart)) {
@@ -446,11 +415,19 @@ impl Handler for PokerHandler {
                         );
                         return Ok(results);
                     }
-                    self.first_player = self
-                        .players_order
-                        .iter()
-                        .position(|x| *x == player)
-                        .unwrap();
+                    self.first_player = player_index;
+                    self.global_first_player = player_index;
+                }
+
+                let current = (self.global_first_player + self.turn_id) % N_PLAYS;
+                if current != player_index {
+                    println!("--------------------------------------4");
+                    process_error_response(
+                        &mut results,
+                        player,
+                        &NodeError::PlayRoundError.to_string(),
+                    );
+                    return Ok(results);
                 }
 
                 let ordered_key = self
@@ -472,20 +449,14 @@ impl Handler for PokerHandler {
                 let remainder_len = hand.len();
                 assert_eq!(hand_len - play_len, remainder_len);
 
-                let round_id = play_env.round_id;
-                let turn_id = play_env.turn_id;
-
                 let round_info = self
                     .players_envs
                     .entry(play_env.round_id)
                     .or_insert(HashMap::new());
-                round_info.entry(turn_id).or_insert(play_env);
-
-                self.round_id = round_id;
-                self.turn_id = turn_id;
+                round_info.entry(play_env.turn_id).or_insert(play_env);
 
                 let classic_index = round_info
-                    .get(&turn_id)
+                    .get(&(self.turn_id as u8))
                     .cloned()
                     .unwrap()
                     .play_classic_cards
@@ -503,12 +474,16 @@ impl Handler for PokerHandler {
 
                 println!("Finish Handler play");
 
+                self.continuous_pass = 0;
+                self.turn_id = self.turn_id + 1;
+                self.round_first_player = current;
+
                 process_play_response(&mut results, player, classic_index);
 
                 println!("remainder_len:{}", remainder_len);
                 if remainder_len == 0 {
                     println!("game over, beign prove");
-                    self.prove();
+                    //  self.prove();
                     println!("finish prove");
                 }
 
@@ -522,9 +497,44 @@ impl Handler for PokerHandler {
                 let btyes = params[0].as_str().unwrap();
                 let play_env: PlayerEnv = serde_json::from_str(btyes).map_err(|_| Error::Params)?;
                 assert_eq!(play_env.action, PlayAction::PASS);
-               // assert!(play_env.verify_sign(public_key).is_ok());
+                // assert!(play_env.verify_sign(public_key).is_ok());
 
-                self.round_id = play_env.round_id;
+                if play_env.round_id as usize != self.round_id {
+                    println!("--------------------------------------5");
+                    process_error_response(
+                        &mut results,
+                        player,
+                        &NodeError::LessRoundError.to_string(),
+                    );
+                    return Ok(results);
+                }
+
+                if play_env.turn_id as usize != self.turn_id {
+                    println!("--------------------------------------6");
+                    process_error_response(
+                        &mut results,
+                        player,
+                        &NodeError::PlayTurnError.to_string(),
+                    );
+                    return Ok(results);
+                }
+
+                let player_index = self
+                    .players_order
+                    .iter()
+                    .position(|x| *x == player)
+                    .unwrap();
+
+                let current = (self.global_first_player + self.turn_id) % N_PLAYS;
+                if current != player_index {
+                    println!("--------------------------------------7");
+                    process_error_response(
+                        &mut results,
+                        player,
+                        &NodeError::PlayRoundError.to_string(),
+                    );
+                    return Ok(results);
+                }
 
                 let round_info = self
                     .players_envs
@@ -532,13 +542,23 @@ impl Handler for PokerHandler {
                     .or_insert(HashMap::new());
                 round_info.entry(play_env.turn_id).or_insert(play_env);
 
-                self.turn_id = round_info.len() as u8;
+                // self.turn_id = round_info.len() as u8;
 
                 let mut trace = Map::new();
                 trace.insert("action".to_string(), "pass".into());
                 trace.insert("cards".to_string(), serde_json::Value::Null);
                 trace.insert("player".to_string(), player.to_hex().into());
                 self.traces.push(trace);
+
+                if self.continuous_pass == N_PLAYS - 2 {
+                    self.continuous_pass = 0;
+                    self.round_id += 1;
+                    self.turn_id = 0;
+                    self.global_first_player = self.round_first_player;
+                } else {
+                    self.continuous_pass += 1;
+                    self.turn_id += 1;
+                }
 
                 process_pass_response(&mut results, player);
 
