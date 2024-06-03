@@ -1,5 +1,4 @@
 use std::ops::Mul;
-
 use ark_bn254::Fr;
 use ark_ec::{AdditiveGroup, CurveGroup, PrimeGroup};
 use ark_ed_on_bn254::EdwardsProjective;
@@ -7,9 +6,9 @@ use ark_ff::{BigInteger, Field, PrimeField};
 use num_bigint::BigUint;
 use num_integer::Integer;
 use poker_core::schnorr::{PublicKey, Signature};
-use zplonk::{
+use uzkge::{
     anemoi::{AnemoiJive, AnemoiJive254},
-    turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS, VarIndex},
+    plonk::constraint_system::{ecc::PointVar, turbo::TurboCS, VarIndex},
 };
 
 use crate::get_divisor;
@@ -115,7 +114,7 @@ mod test {
     use super::SignatureOutsource;
     use ark_bn254::Fr;
     use poker_core::mock_data::task::mock_task;
-    use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
+    use uzkge::{anemoi::AnemoiJive254, plonk::constraint_system::turbo::TurboCS};
 
     #[test]
     fn test_signature_constraint_system() {

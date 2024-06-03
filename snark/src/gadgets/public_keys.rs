@@ -1,6 +1,6 @@
 use ark_bn254::Fr;
 use poker_core::schnorr::PublicKey;
-use zplonk::turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS};
+use uzkge::plonk::constraint_system::{ecc::PointVar, turbo::TurboCS};
 
 pub struct PublicKeyOutsource {
     pub public_keys: Vec<PublicKey>,
@@ -32,7 +32,7 @@ impl PublicKeyOutsource {
 mod test {
     use ark_bn254::Fr;
     use poker_core::mock_data::task::mock_task;
-    use zplonk::turboplonk::constraint_system::turbo::TurboCS;
+    use uzkge::plonk::constraint_system::turbo::TurboCS;
 
     use super::PublicKeyOutsource;
 

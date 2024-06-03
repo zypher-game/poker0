@@ -25,6 +25,7 @@ use std::{
     sync::Mutex,
 };
 use z4_engine::{
+    simple_game_result,
     Address, DefaultParams, Error, HandleResult, Handler, PeerId, Result, RoomId, Tasks,
 };
 use zshuffle::{
@@ -53,7 +54,7 @@ pub fn init_prover_key(n: usize) {
 
 pub struct PokerHandler {
     pub room_id: RoomId,
-    pub accounts: HashMap<PeerId, PublicKey>,
+    pub accounts: HashMap<PeerId, (Address, PublicKey)>,
     pub first_player: usize,
     pub players_hand: HashMap<PeerId, Vec<CryptoCard>>,
     pub players_order: Vec<PeerId>,
@@ -81,7 +82,7 @@ impl PokerHandler {
         let players_key = self
             .players_order
             .iter()
-            .map(|x| self.accounts.get(x).cloned().unwrap())
+            .map(|x| self.accounts.get(x).cloned().unwrap().1)
             .collect::<Vec<_>>();
         let players_hand = self
             .players_order
@@ -209,7 +210,7 @@ impl Handler for PokerHandler {
         let mut players_order = vec![];
         let accounts = peers
             .iter()
-            .map(|(_, pid, pk)| {
+            .map(|(aid, pid, pk)| {
                 let pk = EdwardsAffine::deserialize_with_mode(
                     pk.as_slice(),
                     Compress::Yes,
@@ -219,7 +220,7 @@ impl Handler for PokerHandler {
 
                 players_order.push(*pid);
 
-                (*pid, PublicKey(pk))
+                (*pid, (*aid, PublicKey(pk)))
             })
             .collect();
 
@@ -348,7 +349,7 @@ impl Handler for PokerHandler {
     ) -> Result<HandleResult<Self::Param>> {
         println!(" Handler interface :{}", method);
 
-        let public_key = self.accounts.get(&player).ok_or(Error::NoPlayer)?;
+        let (account, public_key) = self.accounts.get(&player).clone().ok_or(Error::NoPlayer)?;
         let params = params.0;
 
         let mut results = HandleResult::default();
@@ -433,7 +434,7 @@ impl Handler for PokerHandler {
                 let ordered_key = self
                     .players_order
                     .iter()
-                    .map(|x| self.accounts.get(x).unwrap().clone())
+                    .map(|x| self.accounts.get(x).unwrap().clone().1)
                     .collect::<Vec<_>>();
                 play_env.sync_reveal_order(&left_rotate(&ordered_key, self.first_player));
 
@@ -486,6 +487,11 @@ impl Handler for PokerHandler {
                     println!("game over, beign prove");
                     //  self.prove();
                     println!("finish prove");
+
+                    // TODO
+                    let rank = simple_game_result(&[*account]);
+                    let proof = vec![];
+                    results.over(rank, proof);
                 }
 
                 println!("Finish Handler play");

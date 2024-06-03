@@ -3,11 +3,11 @@ use ark_ec::CurveGroup;
 use ark_ff::PrimeField;
 use poker_core::schnorr::PublicKey;
 use rand_chacha::rand_core::{CryptoRng, RngCore};
-use zplonk::{
+use uzkge::{
     anemoi::AnemoiJive254,
     errors::Result,
     poly_commit::kzg_poly_commitment::KZGCommitmentSchemeBN254,
-    turboplonk::{
+    plonk::{
         constraint_system::turbo::TurboCS, indexer::PlonkProof, prover::prover_with_lagrange,
         verifier::verifier,
     },

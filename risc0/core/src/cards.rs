@@ -5,7 +5,7 @@ use ark_ed_on_bn254::{EdwardsAffine, EdwardsProjective};
 use ark_ff::MontFp;
 use rand_chacha::rand_core::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
-use zplonk::{
+use uzkge::{
     anemoi::AnemoiJive254,
     chaum_pedersen::dl::{prove0, verify0, ChaumPedersenDLParameters},
     utils::serialization::{ark_deserialize, ark_serialize},

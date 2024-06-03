@@ -11,9 +11,9 @@ use poker_snark::{
 };
 use std::{path::PathBuf, time::Instant};
 use structopt::StructOpt;
-use zplonk::{
+use uzkge::{
     poly_commit::kzg_poly_commitment::KZGCommitmentSchemeBN254,
-    turboplonk::constraint_system::ConstraintSystem,
+    plonk::constraint_system::ConstraintSystem,
 };
 
 #[derive(StructOpt, Debug)]

@@ -5,7 +5,7 @@ use ark_ed_on_bn254::EdwardsProjective;
 use ark_ff::UniformRand;
 use ark_std::rand::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
-use zplonk::{
+use uzkge::{
     chaum_pedersen::dl::ChaumPedersenDLProof,
     shuffle::Ciphertext,
     utils::serialization::{ark_deserialize, ark_serialize},

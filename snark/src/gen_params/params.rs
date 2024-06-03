@@ -6,10 +6,10 @@ use crate::{
 use ark_bn254::{Fr, G1Projective};
 use poker_core::mock_data::task::mock_task;
 use serde::{Deserialize, Serialize};
-use zplonk::{
-    errors::{Result, ZplonkError},
+use uzkge::{
+    errors::{Result, UzkgeError},
     poly_commit::{kzg_poly_commitment::KZGCommitmentSchemeBN254, pcs::PolyComScheme},
-    turboplonk::{
+    plonk::{
         constraint_system::{turbo::TurboCS, ConstraintSystem},
         indexer::{indexer_with_lagrange, PlonkProverParams, PlonkVerifierParams},
     },
@@ -106,10 +106,10 @@ impl VerifierParams {
         match (VERIFIER_COMMON_PARAMS, VERIFIER_SPECIFIC_PARAMS) {
             (Some(c_bytes), Some(s_bytes)) => {
                 let common: VerifierParamsSplitCommon =
-                    bincode::deserialize(c_bytes).map_err(|_| ZplonkError::DeserializationError)?;
+                    bincode::deserialize(c_bytes).map_err(|_| UzkgeError::DeserializationError)?;
 
                 let special: VerifierParamsSplitSpecific =
-                    bincode::deserialize(s_bytes).map_err(|_| ZplonkError::DeserializationError)?;
+                    bincode::deserialize(s_bytes).map_err(|_| UzkgeError::DeserializationError)?;
 
                 Ok(VerifierParams {
                     shrunk_vk: common.shrunk_pcs,
@@ -117,7 +117,7 @@ impl VerifierParams {
                     verifier_params: special.verifier_params,
                 })
             }
-            _ => Err(ZplonkError::MissingVerifierParamsError),
+            _ => Err(UzkgeError::MissingVerifierParamsError),
         }
     }
 
@@ -165,16 +165,16 @@ pub fn load_permutation_params() -> Option<Vec<usize>> {
 
 pub fn load_srs_params(size: usize) -> Result<KZGCommitmentSchemeBN254> {
     if size != 1048576 {
-        return Err(ZplonkError::ParameterError);
+        return Err(UzkgeError::ParameterError);
     }
 
-    let srs = SRS.ok_or(ZplonkError::MissingSRSError)?;
+    let srs = SRS.ok_or(UzkgeError::MissingSRSError)?;
 
     let KZGCommitmentSchemeBN254 {
         public_parameter_group_1,
         public_parameter_group_2,
     } = KZGCommitmentSchemeBN254::from_unchecked_bytes(&srs)
-        .map_err(|_| ZplonkError::DeserializationError)?;
+        .map_err(|_| UzkgeError::DeserializationError)?;
 
     let mut new_group_1 = vec![G1Projective::default(); core::cmp::max(size + 3, 2051)];
     new_group_1[0..2051].copy_from_slice(&public_parameter_group_1[0..2051]);

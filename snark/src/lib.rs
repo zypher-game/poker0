@@ -10,9 +10,9 @@ use std::{
     path::Path,
 };
 
-use zplonk::{
+use uzkge::{
     poly_commit::{field_polynomial::FpPolynomial, kzg_poly_commitment::KZGCommitmentSchemeBN254},
-    turboplonk::indexer::{PlonkProof, PlonkVerifierParams},
+    plonk::indexer::{PlonkProof, PlonkVerifierParams},
 };
 
 pub mod build_cs;

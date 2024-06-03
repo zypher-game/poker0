@@ -10,9 +10,9 @@ use poker_core::{
     cards::{CryptoCard, RevealCard},
     RevealProof,
 };
-use zplonk::{
+use uzkge::{
     anemoi::{AnemoiJive, AnemoiJive254},
-    turboplonk::constraint_system::{ecc::PointVar, turbo::TurboCS},
+    plonk::constraint_system::{ecc::PointVar, turbo::TurboCS},
 };
 
 use crate::get_divisor;
@@ -187,7 +187,7 @@ mod test {
     use crate::{gadgets::public_keys::PublicKeyOutsource, left_rotate};
     use ark_bn254::Fr;
     use poker_core::mock_data::task::mock_task;
-    use zplonk::{anemoi::AnemoiJive254, turboplonk::constraint_system::turbo::TurboCS};
+    use uzkge::{anemoi::AnemoiJive254, plonk::constraint_system::turbo::TurboCS};
 
     #[test]
     fn test_reveals_constraint_system() {

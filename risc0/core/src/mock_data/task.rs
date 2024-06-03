@@ -2,7 +2,7 @@ use ark_ed_on_bn254::EdwardsProjective;
 use ark_std::rand::SeedableRng;
 use hashbrown::HashMap;
 use rand_chacha::ChaChaRng;
-use zplonk::shuffle::Ciphertext;
+use uzkge::shuffle::Ciphertext;
 
 use crate::{
     cards::{reveal0, unmask, verify_reveal0, CryptoCard, ENCODING_CARDS_MAPPING},
