@@ -1,0 +1,11 @@
+node_modules
+artifacts
+config/Config-31337.ts
+typechain-types
+cache
+.DS_Store
+.env
+.secret
+.secret.prod
+.secret.arbitrum
+types/

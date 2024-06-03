@@ -1,0 +1,14 @@
+html,
+body {
+  margin: 0;
+  background-color: #0f0a26;
+}
+
+@keyframes rotate360 {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
