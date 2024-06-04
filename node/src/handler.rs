@@ -306,7 +306,7 @@ impl Handler for PokerHandler {
         game_info.insert("first_player".to_string(), self.first_player.into());
         game_info.insert("online_player".to_string(), player.to_hex().into());
 
-        println!("reveal_info:{:?}", reveal_info.clone());
+        // println!("reveal_info:{:?}", reveal_info.clone());
 
         let mut results = HandleResult::default();
         results.add_all(
@@ -358,15 +358,22 @@ impl Handler for PokerHandler {
             "play" => {
                 println!(" Handler play");
 
-                assert_eq!(params.len(), 1);
+                if params.len() != 1 {
+                    return Err(Error::Params);
+                }
                 let btyes = params[0].as_str().unwrap();
                 let mut play_env: PlayerEnv =
                     serde_json::from_str(btyes).map_err(|_| Error::Params)?;
-                assert_eq!(play_env.action, PlayAction::PLAY);
+
+                if play_env.action != PlayAction::PLAY {
+                    return Err(Error::Params);
+                }
                 //  assert!(play_env.verify_sign(public_key).is_ok());
 
                 let classic = play_env.play_classic_cards.clone().unwrap();
-                assert!(classic.check_format());
+                if !classic.check_format() {
+                    return Err(Error::Params);
+                }
 
                 if classic < self.round_max_deck {
                     println!("--------------------------------------1");
@@ -448,7 +455,10 @@ impl Handler for PokerHandler {
                     }
                 }
                 let remainder_len = hand.len();
-                assert_eq!(hand_len - play_len, remainder_len);
+
+                if hand_len - play_len != remainder_len {
+                    return Err(Error::Params);
+                }
 
                 let round_info = self
                     .players_envs
@@ -499,11 +509,15 @@ impl Handler for PokerHandler {
 
             "pass" => {
                 println!(" Handler pass");
+                if params.len() != 1 {
+                    return Err(Error::Params);
+                }
 
-                assert_eq!(params.len(), 1);
                 let btyes = params[0].as_str().unwrap();
                 let play_env: PlayerEnv = serde_json::from_str(btyes).map_err(|_| Error::Params)?;
-                assert_eq!(play_env.action, PlayAction::PASS);
+                if play_env.action != PlayAction::PASS {
+                    return Err(Error::Params);
+                }
                 // assert!(play_env.verify_sign(public_key).is_ok());
 
                 if play_env.round_id as usize != self.round_id {
@@ -575,8 +589,9 @@ impl Handler for PokerHandler {
 
             "revealRequest" => {
                 println!("Handler revealRequest:{:?}", params);
-
-                assert!(params.len() <= N_CARDS);
+                if params.len() > N_CARDS {
+                    return Err(Error::Params);
+                }
                 process_reveal_request(&mut results, player, params.into());
 
                 println!("Finish Handler revealRequest ");
@@ -584,7 +599,9 @@ impl Handler for PokerHandler {
 
             "revealResponse" => {
                 // vec![peerId, vec![crypto_card, reveal_card, reveal_proof, public_key]]
-                assert!(params.len() == 2);
+                if params.len() != 2 {
+                    return Err(Error::Params);
+                }
                 println!("Handler revealResponse");
 
                 let peer_id = params[0].as_array().unwrap();
@@ -613,7 +630,7 @@ impl Handler for PokerHandler {
                             && hands.len() == HAND_NUM
                             && !self.revealed.contains(&player)
                         {
-                            println!("-------------{},{}", rs.len(), hands.len());
+                            //println!("-------------{},{}", rs.len(), hands.len());
 
                             for (r, c) in rs.iter().zip(hands.iter()) {
                                 let map = r.as_object().unwrap();
@@ -650,7 +667,9 @@ impl Handler for PokerHandler {
                 println!("Finish Handler revealResponse");
             }
 
-            _ => unimplemented!(),
+            _ => {
+                return Err(Error::Params);
+            }
         }
 
         Ok(results)
