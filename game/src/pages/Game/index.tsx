@@ -32,7 +32,7 @@ export const GamePage: React.FC<{}> = (props) => {
   const [gameData, _gameData] = useRecoilState(PageGameDataState);
   const pw = usePromise(pokerWasm.mounted);
   const wallet = useWallet();
-  const gameWss = useWss(gameState.room.http, [gameState.roomId], async (msg) => {
+  const gameWss = useWss(gameState.room.websocket, [gameState.roomId], async (msg) => {
     const gid = Number(gameState.roomId);
     if (msg.error) {
       GlobalVar.notification.error({ message: `Code: ${msg.error.code}`, description: msg.error.message });

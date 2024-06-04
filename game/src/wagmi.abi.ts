@@ -28,6 +28,7 @@ export const pokerApiAbi = [
         type: 'tuple',
         components: [
           { name: 'http', internalType: 'string', type: 'string' },
+          { name: 'websocket', internalType: 'string', type: 'string' },
           { name: 'staking', internalType: 'uint256', type: 'uint256' },
         ],
       },
@@ -74,6 +75,7 @@ export const simpleGameAbi = [
       { name: 'room', internalType: 'uint256', type: 'uint256', indexed: false },
       { name: 'game', internalType: 'address', type: 'address', indexed: false },
       { name: 'reward', internalType: 'uint256', type: 'uint256', indexed: false },
+      { name: 'viewable', internalType: 'bool', type: 'bool', indexed: false },
       { name: 'player', internalType: 'address', type: 'address', indexed: false },
       { name: 'peer', internalType: 'address', type: 'address', indexed: false },
       { name: 'pk', internalType: 'bytes32', type: 'bytes32', indexed: false },
@@ -154,6 +156,7 @@ export const simpleGameAbi = [
     type: 'function',
     inputs: [
       { name: 'ticket', internalType: 'uint256', type: 'uint256' },
+      { name: 'viewable', internalType: 'bool', type: 'bool' },
       { name: 'peer', internalType: 'address', type: 'address' },
       { name: 'pk', internalType: 'bytes32', type: 'bytes32' },
     ],
@@ -226,6 +229,7 @@ export const simpleGameAbi = [
     inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     name: 'rooms',
     outputs: [
+      { name: 'viewable', internalType: 'bool', type: 'bool' },
       { name: 'ticket', internalType: 'uint256', type: 'uint256' },
       { name: 'reward', internalType: 'uint256', type: 'uint256' },
       { name: 'sequencer', internalType: 'address', type: 'address' },
