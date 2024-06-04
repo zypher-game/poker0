@@ -70,6 +70,7 @@ export const PageGameState = atom({
   default: {
     roomId: 0n,
     room: {
+      viewable: true,
       ticket: 0n,
       reward: 0n,
       sequencer: zeroAddress as `0x${string}`,
@@ -77,7 +78,7 @@ export const PageGameState = atom({
       site: 0n,
       result: zeroAddress as `0x${string}`,
       status: RoomStatus.None,
-      http: '',
+      websocket: '',
       staking: 0n,
     },
     players: [] as `0x${string}`[],
@@ -128,14 +129,15 @@ export const usePageGameState = () => {
           begin.unshift({ player, id: `${player}-join`, action: 'Join' });
         });
         const room = {
-          ticket: roomInfo[0],
-          reward: roomInfo[1],
-          sequencer: roomInfo[2],
-          locked: roomInfo[3],
-          site: roomInfo[4],
-          result: roomInfo[5],
-          status: roomInfo[6],
-          http: '',
+          viewable: roomInfo[0],
+          ticket: roomInfo[1],
+          reward: roomInfo[2],
+          sequencer: roomInfo[3],
+          locked: roomInfo[4],
+          site: roomInfo[5],
+          result: roomInfo[6],
+          status: roomInfo[7],
+          websocket: '',
           staking: 0n,
         };
         if (room.status > RoomStatus.Opening) {
@@ -144,7 +146,7 @@ export const usePageGameState = () => {
         if (room.sequencer !== zeroAddress) {
           const sequencerInfo = data[1][2];
           begin.unshift({ player: room.sequencer, id: 'accept', action: 'GameNode' });
-          room.http = sequencerInfo.http + '/ws';
+          room.websocket = sequencerInfo.websocket;
           room.staking = sequencerInfo.staking;
         }
         return { roomId, room, players, logs };

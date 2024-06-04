@@ -8,6 +8,8 @@ mod handler;
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt::init();
+
     init_prover_key(N_CARDS);
     println!("\n{}", Local::now().format("%Y/%m/%d %H:%M:%S"));
 

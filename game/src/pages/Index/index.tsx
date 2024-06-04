@@ -37,12 +37,12 @@ export const PageIndex: React.FC<{}> = (props) => {
               const zkst = pw.generate_key();
               zkst.peer = ethers.computeAddress(zkst.pk);
               _zkss((v) => ({ ...v, [1]: zkst }));
-              // function createRoom(uint256 reward, uint256 limit, address player, address peer, bytes32 pk) external returns (uint256) {
+              // function createRoom(uint256 reward, bool viewable, address player, address peer, bytes32 pk) external returns (uint256) {
               return wallet.write.writeContractAsync({
                 abi: simpleGameAbi,
                 address: wallet.appWallet.config.SimpleGame,
                 functionName: 'createRoom',
-                args: [0n, zkst.peer, zkst.pk],
+                args: [0n, true, zkst.peer, zkst.pk],
               });
             },
             onSuccess: (res) => {

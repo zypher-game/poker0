@@ -24,9 +24,9 @@ export const RainbowKitConfig = getDefaultConfig({
 
 export const ChainConfig = {
   [opBNBTestnet.id]: {
-    Token: '0x044Ee4a9c25949672214e6D17eA646B2e850e096',
-    SimpleGame: '0x7b90EF8E43C696737dc5111A718E404Ca7849168',
-    PokerApi: '0x03f1c5a5AC79dFffCD2Af8184b6EFf431b0243b4',
+    Token: '0xE2EB8fE74541F7bEB437F2362403216d521Ba394',
+    SimpleGame: '0x9DA1371Fd81EF9356AF1B2036F1ed0ac85663669',
+    PokerApi: '0x52FdAEE21Fa091f5BA9726810d2E39D80A80876f',
     z4Ws: 'wss://poker0.zypher.dev/ws',
     z4Http: 'https://poker0.zypher.dev/rpc',
   } as const,
