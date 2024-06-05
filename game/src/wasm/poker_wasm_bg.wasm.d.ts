@@ -2,6 +2,7 @@
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
 export function generate_key(a: number): void;
+export function generate_key_by_seed(a: number, b: number, c: number): void;
 export function reveal_card(a: number, b: number, c: number, d: number): void;
 export function batch_reveal_card(a: number, b: number, c: number, d: number): void;
 export function unmask_card(a: number, b: number, c: number): void;

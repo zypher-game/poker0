@@ -39,7 +39,7 @@ export const GamePagePlayer: React.FC<{
               action: 'JoinRoom',
               async callback() {
                 const pw = await pokerWasm.mounted;
-                const zkst = pw.generate_key();
+                const zkst = pw.generate_key_by_seed("randomseed");
                 zkst.peer = ethers.computeAddress(zkst.pk);
                 _zkss((v) => ({ ...v, [gameState.roomId.toString()]: zkst }));
                 // function joinRoom(uint256 roomId, address player, address peer, bytes32 pk)

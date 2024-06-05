@@ -5,13 +5,11 @@
   "files": [
     "poker_wasm_bg.wasm",
     "poker_wasm.js",
-    "poker_wasm_bg.js",
     "poker_wasm.d.ts"
   ],
   "module": "poker_wasm.js",
   "types": "poker_wasm.d.ts",
   "sideEffects": [
-    "./poker_wasm.js",
     "./snippets/*"
   ]
 }

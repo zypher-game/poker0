@@ -10,8 +10,10 @@ use poker_core::{
     schnorr::{KeyPair, PrivateKey, PublicKey},
     RevealProof,
 };
+use rand_chacha::{rand_core::SeedableRng, ChaChaRng};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
+use sha3::{Digest, Keccak256};
 
 use utils::{
     default_prng, error_to_jsvalue, hex_to_point, hex_to_scalar, point_to_hex, point_to_uncompress,
@@ -66,6 +68,26 @@ pub struct Keypair {
 #[wasm_bindgen]
 pub fn generate_key() -> Result<JsValue, JsValue> {
     let mut prng = default_prng();
+    let keypair = KeyPair::sample(&mut prng);
+    let pkxy = point_to_uncompress(&keypair.get_public_key().get_raw(), true);
+
+    let ret = Keypair {
+        sk: scalar_to_hex(&keypair.get_private_key().0, true),
+        pk: point_to_hex(&keypair.get_public_key().get_raw(), true),
+        pkxy,
+    };
+
+    Ok(serde_wasm_bindgen::to_value(&ret)?)
+}
+
+/// generate keypair
+#[wasm_bindgen]
+pub fn generate_key_by_seed(seed: String) -> Result<JsValue, JsValue> {
+    let mut hasher = Keccak256::new();
+    hasher.update(seed);
+    let result: [u8; 32] = hasher.finalize().into();
+    let mut prng = ChaChaRng::from_seed(result);
+
     let keypair = KeyPair::sample(&mut prng);
     let pkxy = point_to_uncompress(&keypair.get_public_key().get_raw(), true);
 

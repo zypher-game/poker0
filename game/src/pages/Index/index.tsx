@@ -34,7 +34,7 @@ export const PageIndex: React.FC<{}> = (props) => {
             action: 'CreateRoom',
             async callback() {
               const pw = await pokerWasm.mounted;
-              const zkst = pw.generate_key();
+              const zkst = pw.generate_key_by_seed("randomseed");
               zkst.peer = ethers.computeAddress(zkst.pk);
               _zkss((v) => ({ ...v, [1]: zkst }));
               // function createRoom(uint256 reward, bool viewable, address player, address peer, bytes32 pk) external returns (uint256) {
