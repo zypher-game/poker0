@@ -202,6 +202,7 @@ impl Handler for PokerHandler {
         peers: &[(Address, PeerId, [u8; 32])],
         shuffle_decks: Vec<u8>,
         room_id: RoomId,
+        _seed: [u8; 32]
     ) -> (Self, Tasks<Self>) {
         println!("Begin Handler Create :{}", room_id);
 
