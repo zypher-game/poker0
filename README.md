@@ -1,5 +1,9 @@
-# poker0
+# Poker0
 A poker game leveraging RISC0 and PLONK for off-chain proof of game processes, with on-chain validation, built on the Z4 engine.
+
+[Play online](https://poker0.zypher.dev)
+
+Currently, only deploy on [opbnb testnet](https://opbnb-testnet.bscscan.com).
 
 ## Game
 - 3 players
@@ -20,3 +24,7 @@ A poker game leveraging RISC0 and PLONK for off-chain proof of game processes, w
 - Head: The first player to finish playing cards is called the "Head".
 - Breakeven: Only 1 card left but no win. At this time, it is not considered a loss and is called "Breakeven".
 - Winning or Losing: Every time the "Head" wins, all other players lose except for "Breakeven". The negative player will lose the corresponding number of cards left.
+
+## License
+
+This project is licensed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html).
