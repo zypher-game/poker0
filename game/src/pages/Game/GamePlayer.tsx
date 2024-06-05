@@ -15,6 +15,7 @@ import { ethers } from 'ethers';
 import { GlobalVar } from 'src/constants';
 import { errorParse } from 'src/utils';
 import { PokerCardCpt } from 'src/components/PokerCard';
+import { useLoginToken } from 'src/states/login';
 
 export const GamePagePlayer: React.FC<{
   className?: string;
@@ -26,6 +27,7 @@ export const GamePagePlayer: React.FC<{
   const _zkss = useSetRecoilState(stateUserZkss);
   const [wantShows, _wantShows] = useRecoilState(PageGameWantsState);
   const [loading, setLoading] = useState(false);
+  // const genKey = useLoginToken();
   return (
     <PageStyle className={classNames(className, { active: active })}>
       <div className="avatar">
@@ -39,7 +41,10 @@ export const GamePagePlayer: React.FC<{
               action: 'JoinRoom',
               async callback() {
                 const pw = await pokerWasm.mounted;
-                const zkst = pw.generate_key_by_seed("randomseed");
+                const salt = BigInt(wallet.address);
+                // const key = await genKey?.(salt);
+                // if (!key) return;
+                const zkst = pw.generate_key_by_seed(wallet.address);
                 zkst.peer = ethers.computeAddress(zkst.pk);
                 _zkss((v) => ({ ...v, [gameState.roomId.toString()]: zkst }));
                 // function joinRoom(uint256 roomId, address player, address peer, bytes32 pk)

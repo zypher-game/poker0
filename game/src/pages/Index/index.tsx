@@ -14,6 +14,7 @@ import { ethers } from 'ethers';
 import { AppButton } from 'src/components/Com/AppButton';
 import { stateUserZkss } from 'src/states/wallet';
 import { getAddress, getContract, parseEventLogs } from 'viem';
+import { stateLoginState, useLoginToken } from 'src/states/login';
 
 export const PageIndex: React.FC<{}> = (props) => {
   const navi = useNavigate();
@@ -21,6 +22,7 @@ export const PageIndex: React.FC<{}> = (props) => {
   const pageState = useRecoilValue(PageIndexState);
   const wallet = useWallet();
   const _zkss = useSetRecoilState(stateUserZkss);
+  // const genKey = useLoginToken();
 
   return (
     <PageIndexStyle>
@@ -34,7 +36,10 @@ export const PageIndex: React.FC<{}> = (props) => {
             action: 'CreateRoom',
             async callback() {
               const pw = await pokerWasm.mounted;
-              const zkst = pw.generate_key_by_seed("randomseed");
+              // const salt = BigInt(wallet.address);
+              // const key = await genKey?.(salt);
+              // if (!key) return;
+              const zkst = pw.generate_key_by_seed(wallet.address);
               zkst.peer = ethers.computeAddress(zkst.pk);
               _zkss((v) => ({ ...v, [1]: zkst }));
               // function createRoom(uint256 reward, bool viewable, address player, address peer, bytes32 pk) external returns (uint256) {
